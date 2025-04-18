@@ -14,7 +14,62 @@ A chaque évènement sont reliés :
 
 Les participants doivent pouvoir signer numériquement la feuille de présence lors d'une session.
 
-## Getting Started
+## Structure
+
+Le programme `alyra_sign_presence` gère la présence et les événements avec plusieurs fonctionnalités principales :
+
+1. **Gestion des Sessions** :
+   - `create_session` : Création d'une session avec titre, description, et horaires
+   - `mark_presence` : Enregistrement de la présence d'un étudiant à une session
+
+2. **Gestion des Événements** :
+   - `create_event` : Création d'un événement avec titre, description, code, et dates
+   - `register_attendee` : Inscription d'un participant à un événement
+   - `create_clockin` : Enregistrement de la présence d'un participant à une session
+
+3. **Structures de Données** :
+   - Tailles maximales définies pour les champs :
+     - Titre : 16 octets
+     - Description : 32 octets
+     - Email : 32 octets
+     - Nom : 16 octets
+
+4. **Comptes (Accounts)** :
+   - `Event` : Informations sur l'événement
+   - `Attendee` : Informations sur les participants
+   - `Session` : Détails des sessions
+   - `Presence` : Enregistrement des présences
+   - `Clockin` : Pointage des participants
+
+Le programme `alyra_sign_registry` est structuré de manière similaire à `alyra_sign_presence`, mais avec quelques différences clés :
+
+1. **Tailles maximales plus petites** :
+   - Titre : 8 octets (vs 16 dans presence)
+   - Description : 16 octets (vs 32 dans presence)
+   - Email : 16 octets (vs 32 dans presence)
+   - Nom : 8 octets (vs 16 dans presence)
+
+2. **Fonctionnalités principales** :
+   - `create_registry` : Création d'un registre avec titre et description
+   - `create_formation` : Création d'une formation liée à un registre
+   - `register_student` : Inscription d'un étudiant à une formation
+   - `create_session` : Création d'une session de formation
+   - `mark_presence` : Marquage de la présence d'un étudiant
+
+3. **Structures de données** :
+   - `Registry` : Gestion des registres
+   - `Formation` : Informations sur les formations
+   - `Student` : Données des étudiants
+   - `Session` : Détails des sessions
+   - `Presence` : Enregistrement des présences
+
+4. **Gestion des erreurs** :
+   - `ErrorCode` enum pour gérer les erreurs de validation des champs
+
+Les deux programmes sont complémentaires :
+- `alyra_sign_registry` gère la structure hiérarchique (registre → formation → étudiant)
+- `alyra_sign_presence` se concentre sur la gestion des événements et des présences
+
 
 ### Dependencies
 

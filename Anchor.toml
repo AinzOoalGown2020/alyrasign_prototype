@@ -1,18 +1,21 @@
 [toolchain]
+anchor_version = "0.30.1"
 
 [features]
 resolution = true
 skip-lint = false
 
-[programs.localnet]
-alyra_sign = "FuhRcrvsVAj6iiDvEy5cUuSmsnGKWxdHTbJSod7CU4CS"
+[programs.devnet]
+alyra_sign_presence = "Ao4GvKFFuGazwP3VoiJkgQ1Z1vGLGoMfRQvcGdBpSgEH"
+alyra_sign_registry = "CLexS8jaWL7g5cSf4HyqyueHazNxBLoHFuAmETj8HKXk"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "Devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
+copy-idl = "cp target/idl/*.json src/idl/"
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

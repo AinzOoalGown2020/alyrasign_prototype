@@ -20,12 +20,12 @@ Les participants doivent pouvoir signer numériquement la feuille de présence l
 
 ```
 solana --version
-solana-cli 2.1.16 (src:a5744e79; feat:3271415109, client:Agave)
+solana-cli 2.1.16 (src:5002c630; feat:3271415109, client:Agave)
 ```
 
 ```
 anchor --version
-anchor-cli 0.30.1
+anchor-cli 0.30.1 (@coral-xyz)
 ```
 
 ```
@@ -65,6 +65,9 @@ cargo 1.85.0 (d73d2caf9 2024-12-31)
 
 * 0.1
     * Initial Release
+
+* 0.2
+    * Erreur recurente et correction des problèmes de compatibilité avec la dépendance ahash (à corriger)
 
 
 

@@ -1,62 +1,61 @@
+import { Session } from '@/types/formation'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import Link from 'next/link'
 
-interface Session {
-  id: string
-  title: string
-  date: Date
-  startTime: string
-  endTime: string
-  formationId: string
-}
-
 interface SessionCardProps {
   session: Session
+  formationId: string
   onEdit: () => void
   onDelete: () => void
 }
 
-export function SessionCard({ session, onEdit, onDelete }: SessionCardProps) {
+export function SessionCard({
+  session,
+  formationId,
+  onEdit,
+  onDelete,
+}: SessionCardProps) {
   return (
-    <div className="card space-y-4">
-      <div className="flex justify-between items-start">
-        <h3 className="text-xl font-semibold text-gray-900">{session.title}</h3>
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="flex justify-between items-start mb-4">
+        <h3 className="text-xl font-semibold text-gray-900">
+          {session.titre}
+        </h3>
         <div className="flex space-x-2">
           <button
             onClick={onEdit}
-            className="btn btn-secondary"
+            className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800"
           >
             Modifier
           </button>
           <button
             onClick={onDelete}
-            className="btn bg-red-600 text-white hover:bg-red-700"
+            className="px-3 py-1 text-sm text-red-600 hover:text-red-800"
           >
             Supprimer
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <span className="font-medium">Date :</span>
-          <p>{format(session.date, 'dd MMMM yyyy', { locale: fr })}</p>
-        </div>
-        <div>
-          <span className="font-medium">Horaire :</span>
-          <p>{session.startTime} - {session.endTime}</p>
-        </div>
+      <div className="text-sm text-gray-500 mb-4">
+        <p>
+          Date: {format(session.date, 'dd MMMM yyyy', { locale: fr })}
+        </p>
+        <p>
+          Horaire: {session.heureDebut} - {session.heureFin}
+        </p>
+        <p>
+          Présences: {session.presences.length}
+        </p>
       </div>
 
-      <div className="flex justify-end pt-4 border-t">
-        <Link
-          href={`/admin/presences?sessionId=${session.id}`}
-          className="btn btn-primary"
-        >
-          Gérer les Présences
-        </Link>
-      </div>
+      <Link
+        href={`/formateur/presences?formationId=${formationId}&sessionId=${session.id}`}
+        className="block w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-center"
+      >
+        Gérer les Présences
+      </Link>
     </div>
   )
 } 

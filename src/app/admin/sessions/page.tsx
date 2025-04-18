@@ -7,32 +7,51 @@ import { SessionModal } from '@/components/sessions/SessionModal'
 import { useSessions } from '@/hooks/useSessions'
 import { Navbar } from '@/components/layout/Navbar'
 import Link from 'next/link'
+import { PublicKey } from '@solana/web3.js'
 
 export default function SessionsPage() {
   const searchParams = useSearchParams()
-  const formationId = searchParams.get('formationId')
+  const formationPubkey = searchParams.get('formationPubkey')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedSession, setSelectedSession] = useState<any>(null)
-  const { sessions, formation, isLoading, createSession, updateSession, deleteSession } = useSessions(formationId)
+  const { sessions, isLoading, createSession, updateSession, deleteSession } = useSessions()
 
   const handleCreateSession = async (data: any) => {
-    await createSession(data)
+    if (!formationPubkey) return
+    await createSession.mutateAsync({
+      id: sessions.length + 1,
+      formationPubkey: new PublicKey(formationPubkey),
+      title: data.title,
+      description: data.description,
+      startTime: Math.floor(new Date(data.startTime).getTime() / 1000),
+      endTime: Math.floor(new Date(data.endTime).getTime() / 1000),
+    })
     setIsModalOpen(false)
   }
 
   const handleEditSession = async (data: any) => {
-    await updateSession(selectedSession.id, data)
+    if (!selectedSession) return
+    await updateSession.mutateAsync({
+      pubkey: selectedSession.pubkey,
+      input: {
+        id: selectedSession.id,
+        title: data.title,
+        description: data.description,
+        startTime: Math.floor(new Date(data.startTime).getTime() / 1000),
+        endTime: Math.floor(new Date(data.endTime).getTime() / 1000),
+      },
+    })
     setIsModalOpen(false)
     setSelectedSession(null)
   }
 
-  const handleDeleteSession = async (id: string) => {
+  const handleDeleteSession = async (pubkey: PublicKey) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette session ?')) {
-      await deleteSession(id)
+      await deleteSession.mutateAsync(pubkey)
     }
   }
 
-  if (!formationId) {
+  if (!formationPubkey) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
@@ -47,6 +66,10 @@ export default function SessionsPage() {
       </div>
     )
   }
+
+  const formationSessions = sessions.filter(
+    session => session.formationPubkey.toString() === formationPubkey
+  )
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -66,15 +89,6 @@ export default function SessionsPage() {
             </h1>
           </div>
 
-          {formation && (
-            <div className="bg-white p-4 rounded-lg shadow mb-6">
-              <h2 className="text-lg font-medium text-gray-900">{formation.title}</h2>
-              <p className="text-sm text-gray-500">
-                Du {formation.startDate.toLocaleDateString()} au {formation.endDate.toLocaleDateString()}
-              </p>
-            </div>
-          )}
-
           <div className="flex justify-end mb-6">
             <button
               onClick={() => setIsModalOpen(true)}
@@ -88,21 +102,22 @@ export default function SessionsPage() {
             <div className="text-center py-12">
               <p className="text-gray-500">Chargement des sessions...</p>
             </div>
-          ) : sessions.length === 0 ? (
+          ) : formationSessions.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500">Aucune session disponible</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {sessions.map((session) => (
+              {formationSessions.map((session) => (
                 <SessionCard
-                  key={session.id}
+                  key={session.pubkey.toString()}
                   session={session}
+                  formationId={formationPubkey}
                   onEdit={() => {
                     setSelectedSession(session)
                     setIsModalOpen(true)
                   }}
-                  onDelete={() => handleDeleteSession(session.id)}
+                  onDelete={() => handleDeleteSession(session.pubkey)}
                 />
               ))}
             </div>
@@ -118,7 +133,7 @@ export default function SessionsPage() {
         }}
         onSubmit={selectedSession ? handleEditSession : handleCreateSession}
         initialData={selectedSession}
-        formationId={formationId}
+        formationPubkey={new PublicKey(formationPubkey)}
         mode={selectedSession ? 'edit' : 'create'}
       />
     </div>

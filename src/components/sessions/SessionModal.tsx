@@ -1,157 +1,124 @@
 import { Dialog, Transition } from '@headlessui/react'
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { PublicKey } from '@solana/web3.js'
+import { Session } from '@/types/formation'
 
 interface SessionFormData {
   title: string
-  date: string
+  description: string
   startTime: string
   endTime: string
 }
 
 interface SessionModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (data: SessionFormData) => void
-  initialData?: SessionFormData
+  session?: Session
   formationId: string
-  mode: 'create' | 'edit'
+  onSave: (session: Omit<Session, 'id' | 'presences'>) => void
+  onClose: () => void
 }
 
 export function SessionModal({
-  isOpen,
-  onClose,
-  onSubmit,
-  initialData,
+  session,
   formationId,
-  mode,
+  onSave,
+  onClose,
 }: SessionModalProps) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SessionFormData>({
-    defaultValues: initialData,
-  })
+  const [titre, setTitre] = useState(session?.titre || '')
+  const [date, setDate] = useState(
+    session?.date ? session.date.toISOString().split('T')[0] : ''
+  )
+  const [heureDebut, setHeureDebut] = useState(session?.heureDebut || '')
+  const [heureFin, setHeureFin] = useState(session?.heureFin || '')
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSave({
+      titre,
+      formationId,
+      date: new Date(date),
+      heureDebut,
+      heureFin,
+    })
+  }
 
   return (
-    <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-10" onClose={onClose}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
-        </Transition.Child>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 className="text-xl font-semibold mb-4">
+          {session ? 'Modifier la Session' : 'Créer une Session'}
+        </h2>
 
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
-            >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                <Dialog.Title
-                  as="h3"
-                  className="text-lg font-medium leading-6 text-gray-900"
-                >
-                  {mode === 'create' ? 'Créer une Session' : 'Modifier la Session'}
-                </Dialog.Title>
-
-                <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4">
-                  <div>
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                      Titre
-                    </label>
-                    <input
-                      type="text"
-                      id="title"
-                      {...register('title', { required: 'Le titre est requis' })}
-                      className="input mt-1"
-                    />
-                    {errors.title && (
-                      <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label htmlFor="date" className="block text-sm font-medium text-gray-700">
-                      Date
-                    </label>
-                    <input
-                      type="date"
-                      id="date"
-                      {...register('date', { required: 'La date est requise' })}
-                      className="input mt-1"
-                    />
-                    {errors.date && (
-                      <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="startTime" className="block text-sm font-medium text-gray-700">
-                        Heure de début
-                      </label>
-                      <input
-                        type="time"
-                        id="startTime"
-                        {...register('startTime', { required: "L'heure de début est requise" })}
-                        className="input mt-1"
-                      />
-                      {errors.startTime && (
-                        <p className="mt-1 text-sm text-red-600">{errors.startTime.message}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label htmlFor="endTime" className="block text-sm font-medium text-gray-700">
-                        Heure de fin
-                      </label>
-                      <input
-                        type="time"
-                        id="endTime"
-                        {...register('endTime', { required: "L'heure de fin est requise" })}
-                        className="input mt-1"
-                      />
-                      {errors.endTime && (
-                        <p className="mt-1 text-sm text-red-600">{errors.endTime.message}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-6 flex justify-end space-x-3">
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="btn bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn btn-primary"
-                    >
-                      {mode === 'create' ? 'Créer' : 'Modifier'}
-                    </button>
-                  </div>
-                </form>
-              </Dialog.Panel>
-            </Transition.Child>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Titre
+            </label>
+            <input
+              type="text"
+              value={titre}
+              onChange={(e) => setTitre(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              required
+            />
           </div>
-        </div>
-      </Dialog>
-    </Transition>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Date
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Heure de début
+            </label>
+            <input
+              type="time"
+              value={heureDebut}
+              onChange={(e) => setHeureDebut(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Heure de fin
+            </label>
+            <input
+              type="time"
+              value={heureFin}
+              onChange={(e) => setHeureFin(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            >
+              {session ? 'Modifier' : 'Créer'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   )
 } 

@@ -32,24 +32,18 @@ export function useBlockchain() {
   }, [provider])
 
   // Création d'une formation
-  const createEvent = async (eventId: number, eventCode: string, title: string) => {
+  const createFormation = async (formationId: number, title: string, description: string) => {
     if (!program || !publicKey) throw new Error('Program not initialized')
 
-    const [registryPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('alyra_sign'), publicKey.toBuffer()],
-      programID
-    )
-
-    const [eventPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('event'), Buffer.from(eventId.toString())],
+    const [formationPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from('formation'), Buffer.from(formationId.toString())],
       programID
     )
 
     await program.methods
-      .createEvent(eventId, eventCode, title)
+      .createFormation(formationId, title, description)
       .accounts({
-        event: eventPDA,
-        registry: registryPDA,
+        formation: formationPDA,
         authority: publicKey,
         systemProgram: web3.SystemProgram.programId,
       })
@@ -57,11 +51,11 @@ export function useBlockchain() {
   }
 
   // Création d'une session
-  const createSession = async (eventPubkey: PublicKey, sessionId: number, title: string, startAt: number, endAt: number) => {
+  const createSession = async (formationPubkey: PublicKey, sessionId: number, title: string, startAt: number, endAt: number) => {
     if (!program || !publicKey) throw new Error('Program not initialized')
 
     const [sessionPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('session'), eventPubkey.toBuffer(), Buffer.from(sessionId.toString())],
+      [Buffer.from('session'), formationPubkey.toBuffer(), Buffer.from(sessionId.toString())],
       programID
     )
 
@@ -69,7 +63,7 @@ export function useBlockchain() {
       .createSession(sessionId, title, startAt, endAt)
       .accounts({
         session: sessionPDA,
-        event: eventPubkey,
+        formation: formationPubkey,
         authority: publicKey,
         systemProgram: web3.SystemProgram.programId,
       })
@@ -77,48 +71,54 @@ export function useBlockchain() {
   }
 
   // Enregistrement d'un étudiant
-  const registerAttendee = async (eventPubkey: PublicKey, firstName: string, lastName: string, email: string) => {
+  const registerStudent = async (formationPubkey: PublicKey, firstName: string, lastName: string, email: string) => {
     if (!program || !publicKey) throw new Error('Program not initialized')
 
-    const attendeeCount = await program.account.event.fetch(eventPubkey).then(event => event.attendeesCount)
+    const studentCount = await program.account.formation.fetch(formationPubkey).then(formation => formation.studentCount)
 
-    const [registeredAttendeePDA] = PublicKey.findProgramAddressSync(
+    const [studentPDA] = PublicKey.findProgramAddressSync(
       [
-        Buffer.from('registered_attendee'),
-        eventPubkey.toBuffer(),
+        Buffer.from('student'),
+        formationPubkey.toBuffer(),
         publicKey.toBuffer(),
-        Buffer.from((attendeeCount + 1).toString())
+        Buffer.from((studentCount + 1).toString())
       ],
       programID
     )
 
     await program.methods
-      .registerAttendee(firstName, lastName, email)
+      .registerStudent(firstName, lastName, email)
       .accounts({
-        registeredAttendee: registeredAttendeePDA,
-        event: eventPubkey,
-        attendee: publicKey,
+        student: studentPDA,
+        formation: formationPubkey,
+        studentWallet: publicKey,
         signer: publicKey,
         systemProgram: web3.SystemProgram.programId,
       })
       .rpc()
   }
 
-  // Enregistrement d'une présence
-  const createClockin = async (sessionPubkey: PublicKey, eventPubkey: PublicKey) => {
+  // Marquer une présence
+  const markPresence = async (sessionPubkey: PublicKey, formationPubkey: PublicKey) => {
     if (!program || !publicKey) throw new Error('Program not initialized')
 
-    const [registeredAttendeePDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('registered_attendee'), eventPubkey.toBuffer(), publicKey.toBuffer()],
+    const [studentPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from('student'), formationPubkey.toBuffer(), publicKey.toBuffer()],
+      programID
+    )
+
+    const [presencePDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from('presence'), sessionPubkey.toBuffer(), publicKey.toBuffer()],
       programID
     )
 
     await program.methods
-      .createClockin()
+      .markPresence()
       .accounts({
+        presence: presencePDA,
         session: sessionPubkey,
-        registeredAttendee: registeredAttendeePDA,
-        attendee: publicKey,
+        student: studentPDA,
+        studentWallet: publicKey,
         systemProgram: web3.SystemProgram.programId,
       })
       .rpc()
@@ -126,9 +126,9 @@ export function useBlockchain() {
 
   return {
     program,
-    createEvent,
+    createFormation,
     createSession,
-    registerAttendee,
-    createClockin,
+    registerStudent,
+    markPresence,
   }
 } 

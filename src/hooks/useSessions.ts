@@ -1,115 +1,107 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useBlockchain } from './useBlockchain'
 import { PublicKey } from '@solana/web3.js'
 
 export interface Session {
-  id: string
+  pubkey: PublicKey
+  id: number
+  formationPubkey: PublicKey
   title: string
-  date: Date
-  startTime: string
-  endTime: string
-  formationId: string
+  description: string
+  startTime: number
+  endTime: number
+  studentCount: number
+  createdAt: number
 }
 
 export interface SessionInput {
+  id: number
+  formationPubkey: PublicKey
   title: string
-  date: string
-  startTime: string
-  endTime: string
+  description: string
+  startTime: number
+  endTime: number
 }
 
-export function useSessions(formationId: string) {
+export function useSessions() {
+  const { program } = useBlockchain()
   const queryClient = useQueryClient()
-  const { program, createSession } = useBlockchain()
 
-  // Récupération des sessions
   const { data: sessions = [], isLoading } = useQuery({
-    queryKey: ['sessions', formationId],
+    queryKey: ['sessions'],
     queryFn: async () => {
       if (!program) return []
-
-      try {
-        const eventPubkey = new PublicKey(formationId)
-        const sessions = await program.account.session.all([
-          {
-            memcmp: {
-              offset: 32, // Position du champ event dans la structure Session
-              bytes: eventPubkey.toBase58(),
-            },
-          },
-        ])
-
-        return sessions.map((session: any) => ({
-          id: session.publicKey.toString(),
-          title: session.account.title,
-          date: new Date(session.account.startAt * 1000),
-          startTime: new Date(session.account.startAt * 1000).toLocaleTimeString(),
-          endTime: new Date(session.account.endAt * 1000).toLocaleTimeString(),
-          formationId: session.account.event.toString(),
-        }))
-      } catch (error) {
-        console.error('Error fetching sessions:', error)
-        return []
-      }
+      
+      const sessions = await program.account.session.all()
+      return sessions.map(session => ({
+        pubkey: session.publicKey,
+        id: session.account.id,
+        formationPubkey: session.account.formation,
+        title: session.account.title,
+        description: session.account.description,
+        startTime: session.account.startTime,
+        endTime: session.account.endTime,
+        studentCount: session.account.studentCount,
+        createdAt: session.account.createdAt,
+      }))
     },
-    enabled: !!program && !!formationId,
   })
 
-  // Création d'une session
-  const createSessionMutation = useMutation({
-    mutationFn: async (data: SessionInput) => {
-      const sessionId = Date.now()
-      const startAt = Math.floor(new Date(`${data.date} ${data.startTime}`).getTime() / 1000)
-      const endAt = Math.floor(new Date(`${data.date} ${data.endTime}`).getTime() / 1000)
-
-      await createSession(
-        new PublicKey(formationId),
-        sessionId,
-        data.title,
-        startAt,
-        endAt
+  const createSession = useMutation({
+    mutationFn: async (input: SessionInput) => {
+      if (!program) throw new Error('Program not initialized')
+      await program.methods.createSession(
+        input.id,
+        input.title,
+        input.description,
+        input.startTime,
+        input.endTime
       )
-
-      return {
-        id: sessionId.toString(),
-        ...data,
-        formationId,
-      }
+      .accounts({
+        formation: input.formationPubkey,
+      })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sessions', formationId] })
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
     },
   })
 
-  // Mise à jour d'une session
   const updateSession = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: SessionInput }) => {
-      // TODO: Implémenter la mise à jour sur la blockchain
-      console.log('Updating session:', id, data)
-      return { id, ...data, formationId }
+    mutationFn: async ({ pubkey, input }: { pubkey: PublicKey, input: Omit<SessionInput, 'formationPubkey'> }) => {
+      if (!program) throw new Error('Program not initialized')
+      await program.methods.updateSession(
+        input.title,
+        input.description,
+        input.startTime,
+        input.endTime
+      )
+      .accounts({
+        session: pubkey,
+      })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sessions', formationId] })
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
     },
   })
 
-  // Suppression d'une session
   const deleteSession = useMutation({
-    mutationFn: async (id: string) => {
-      // TODO: Implémenter la suppression sur la blockchain
-      console.log('Deleting session:', id)
-      return id
+    mutationFn: async (pubkey: PublicKey) => {
+      if (!program) throw new Error('Program not initialized')
+      await program.methods.deleteSession()
+        .accounts({
+          session: pubkey,
+        })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sessions', formationId] })
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
     },
   })
 
   return {
     sessions,
     isLoading,
-    createSession: createSessionMutation.mutateAsync,
-    updateSession: (id: string, data: SessionInput) => updateSession.mutateAsync({ id, data }),
-    deleteSession: deleteSession.mutateAsync,
+    createSession,
+    updateSession,
+    deleteSession,
   }
 } 

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("Ao4GvKFFuGazwP3VoiJkgQ1Z1vGLGoMfRQvcGdBpSgEH");
+declare_id!("HcbqD16ckx9WtEqb2pg5vRYtDQoS4ESj5FLfS1NycUwj");
 
 const MAX_TITLE_LENGTH: usize = 16;
 const MAX_DESCRIPTION_LENGTH: usize = 32;
@@ -19,7 +19,7 @@ pub mod alyra_sign_presence {
         end_time: i64,
     ) -> Result<()> {
         let session = &mut ctx.accounts.session;
-        session.formation = ctx.accounts.formation;
+        session.formation = ctx.accounts.formation.key();
         session.title = title;
         session.description = description;
         session.start_time = start_time as u32;
@@ -33,7 +33,7 @@ pub mod alyra_sign_presence {
         session: Pubkey,
     ) -> Result<()> {
         let presence = &mut ctx.accounts.presence;
-        presence.student = ctx.accounts.student;
+        presence.student = ctx.accounts.student.key();
         presence.session = session;
         presence.timestamp = Clock::get()?.unix_timestamp as u32;
         Ok(())

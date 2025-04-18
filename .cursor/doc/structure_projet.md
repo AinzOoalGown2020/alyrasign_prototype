@@ -179,37 +179,13 @@
 	-- Titre de la Section : "Mes Formations"
 		--- Mis en avant de la prochaine session
 		--- Liste des formations associées à l'etudiant connecté
+		--- systeme de "mark_presence" (pointage)  pour valider la présence des étudiants
+			---- ACTION : l'etudiant entre sur son protail, il choisi sa formation dont il est deja assigné par le formateur, il choisi sa session du jour puis il valide sa presence
+
 
 ====
 
-# Architecture d'une Application de Gestion de Formations sur Solana
-
-## Introduction
-Application de gestion de formations et de sessions sur la blockchain Solana. L'application permet aux formateurs de créer et gérer des formations, et aux étudiants de s'inscrire aux sessions et de signer leur présence. Toutes les données sont stockées de manière sécurisée et immuable sur Solana.
-
-## Structure des Données
-
-### Types de Comptes
-- **Compte de Stockage des Formations** : Contient toutes les formations avec leurs métadonnées (nom, description, dates, statut, etc.).
-- **Compte de Stockage des Sessions** : Contient toutes les sessions, liées aux formations par des IDs, avec leurs métadonnées.
-- **Index des Formations/Sessions Actives** : Liste les IDs des formations et sessions actives pour une récupération rapide.
-- **Compte de stockage des étudiants** : Pour la gestion des etudiants importés dans la section « Gestion des Étudiants »
-
-## Gestion des Accès et Authentification
-
-### Système de Tokens
-- **Token Formateur** : Accès complet à toutes les fonctionnalités.
-- **Token Étudiant** : Permet de consulter les formations/sessions deja associés par les formateurs
-- **Mise à jour des droits** : Modification des droits associés à chaque type de token via des contrats intelligents.
-
-### Processus d'Authentification
-1. **Connexion** : L'utilisateur se connecte avec son portefeuille Solana.
-2. **Vérification** : Vérification des tokens associés à l'adresse du portefeuille.
-3. **Attribution des droits** : Accès aux fonctionnalités en fonction des tokens détenus.
-
-====
-
-# Creer un fichier ".env.memo" pour rappel des variables importantes :
+# Creer un fichier ".env" pour rappel des variables importantes :
 
 ## Configuration Solana
 NEXT_PUBLIC_SOLANA_CLUSTER=devnet
@@ -217,7 +193,7 @@ NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
 NEXT_PUBLIC_SOLANA_PROGRAM_ID="your_program_id_here"
 
 ## Contrôle de l'utilisation de la blockchain vs simulation
-## Mettre à "true" pour utiliser réellement la blockchain, "false" pour utiliser le localStorage (simulation)
+## Mettre à "true" pour utiliser réellement la blockchain sur devnet
 NEXT_PUBLIC_USE_BLOCKCHAIN="true"
 
 ## Wallet admin prédéfini

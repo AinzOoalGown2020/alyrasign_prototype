@@ -1,0 +1,428 @@
+{
+  "version": "0.1.0",
+  "name": "alyra_sign_registry",
+  "instructions": [
+    {
+      "name": "createRegistry",
+      "accounts": [
+        {
+          "name": "registry",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "title",
+          "type": {
+            "array": ["u8", 64]
+          }
+        },
+        {
+          "name": "description",
+          "type": {
+            "array": ["u8", 256]
+          }
+        }
+      ]
+    },
+    {
+      "name": "createFormation",
+      "accounts": [
+        {
+          "name": "formation",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "registry",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "title",
+          "type": {
+            "array": ["u8", 64]
+          }
+        },
+        {
+          "name": "description",
+          "type": {
+            "array": ["u8", 256]
+          }
+        },
+        {
+          "name": "startDate",
+          "type": "u32"
+        },
+        {
+          "name": "endDate",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "registerStudent",
+      "accounts": [
+        {
+          "name": "student",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "formation",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "studentWallet",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "firstName",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "lastName",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "email",
+          "type": {
+            "array": ["u8", 64]
+          }
+        }
+      ]
+    },
+    {
+      "name": "createSession",
+      "accounts": [
+        {
+          "name": "session",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "formation",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "title",
+          "type": {
+            "array": ["u8", 64]
+          }
+        },
+        {
+          "name": "description",
+          "type": {
+            "array": ["u8", 256]
+          }
+        },
+        {
+          "name": "startTime",
+          "type": "i64"
+        },
+        {
+          "name": "endTime",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "markPresence",
+      "accounts": [
+        {
+          "name": "presence",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "student",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "session",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "studentWallet",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "session",
+          "type": "publicKey"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Registry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "formationCount",
+            "type": "u8"
+          },
+          {
+            "name": "studentCount",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "createdAt",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Formation",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "registry",
+            "type": "publicKey"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "startDate",
+            "type": "u32"
+          },
+          {
+            "name": "endDate",
+            "type": "u32"
+          },
+          {
+            "name": "studentCount",
+            "type": "u8"
+          },
+          {
+            "name": "sessions",
+            "type": {
+              "array": ["publicKey", 10]
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "createdAt",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Student",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "formation",
+            "type": "publicKey"
+          },
+          {
+            "name": "wallet",
+            "type": "publicKey"
+          },
+          {
+            "name": "firstName",
+            "type": "string"
+          },
+          {
+            "name": "lastName",
+            "type": "string"
+          },
+          {
+            "name": "email",
+            "type": "string"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "createdAt",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Session",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "formation",
+            "type": "publicKey"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "startTime",
+            "type": "i64"
+          },
+          {
+            "name": "endTime",
+            "type": "i64"
+          },
+          {
+            "name": "presences",
+            "type": {
+              "array": ["publicKey", 10]
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "createdAt",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Presence",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "student",
+            "type": "publicKey"
+          },
+          {
+            "name": "session",
+            "type": "publicKey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "TitleTooLong",
+      "msg": "Title is too long"
+    },
+    {
+      "code": 6001,
+      "name": "DescriptionTooLong",
+      "msg": "Description is too long"
+    },
+    {
+      "code": 6002,
+      "name": "NameTooLong",
+      "msg": "Name is too long"
+    },
+    {
+      "code": 6003,
+      "name": "EmailTooLong",
+      "msg": "Email is too long"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidString",
+      "msg": "Invalid string encoding"
+    }
+  ]
+} 

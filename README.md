@@ -16,97 +16,123 @@ Les participants doivent pouvoir signer numériquement la feuille de présence l
 
 ## Structure
 
-Le programme `alyra_sign_presence` gère la présence et les événements avec plusieurs fonctionnalités principales :
+Le projet est composé de trois programmes Solana distincts :
 
-1. **Gestion des Sessions** :
-   - `create_session` : Création d'une session avec titre, description, et horaires
-   - `mark_presence` : Enregistrement de la présence d'un étudiant à une session
+### 1. alyra_sign_registry
 
-2. **Gestion des Événements** :
-   - `create_event` : Création d'un événement avec titre, description, code, et dates
+Programme principal gérant la structure hiérarchique des formations :
+
+1. **Gestion des Registres** :
+   - `create_registry` : Création d'un registre avec titre et description
+   - Tailles maximales :
+     - Titre : 64 octets
+     - Description : 256 octets
+   - Attributs :
+     - Authority (Pubkey)
+     - Formation count
+     - Student count
+     - Created at timestamp
+
+2. **Gestion des Formations** :
+   - `create_formation` : Création d'une formation avec titre, description et dates
+   - `register_student` : Inscription d'un étudiant à une formation
+   - Tailles maximales :
+     - Titre : 64 octets
+     - Description : 256 octets
+     - Email : 64 octets
+     - Nom : 32 octets
+   - Attributs :
+     - Start date / End date
+     - Student count
+     - Sessions list
+     - Created at timestamp
+
+3. **Gestion des Sessions** :
+   - `create_session` : Création d'une session avec titre, description et horaires
+   - `mark_presence` : Enregistrement de la présence d'un étudiant
+   - Attributs :
+     - Start time / End time
+     - Presences list
+     - Created at timestamp
+
+4. **Structures de Données** :
+   - `Registry` : Informations sur le registre
+   - `Formation` : Détails des formations
+   - `Student` : Données des étudiants
+   - `Session` : Informations sur les sessions
+   - `Presence` : Enregistrement des présences
+
+### 2. alyra_sign_presence
+
+Programme dédié à la gestion des présences et événements :
+
+1. **Gestion des Événements** :
+   - `create_event` : Création d'un événement avec titre, description, code et dates
    - `register_attendee` : Inscription d'un participant à un événement
-   - `create_clockin` : Enregistrement de la présence d'un participant à une session
-
-3. **Structures de Données** :
-   - Tailles maximales définies pour les champs :
+   - Tailles maximales :
      - Titre : 16 octets
      - Description : 32 octets
      - Email : 32 octets
      - Nom : 16 octets
+   - Attributs :
+     - Event code
+     - Start date / End date
+     - Attendee count
+     - Created at timestamp
 
-4. **Comptes (Accounts)** :
+2. **Gestion des Sessions** :
+   - `create_session` : Création d'une session avec titre, description et horaires
+   - `mark_presence` : Enregistrement de la présence d'un étudiant
+   - `create_clockin` : Pointage des participants à une session
+
+3. **Structures de Données** :
    - `Event` : Informations sur l'événement
-   - `Attendee` : Informations sur les participants
+   - `Attendee` : Données des participants
    - `Session` : Détails des sessions
    - `Presence` : Enregistrement des présences
    - `Clockin` : Pointage des participants
 
-Le programme `alyra_sign_registry` est structuré de manière similaire à `alyra_sign_presence`, mais avec quelques différences clés :
+### 3. alyra_sign
 
-1. **Tailles maximales plus petites** :
-   - Titre : 8 octets (vs 16 dans presence)
-   - Description : 16 octets (vs 32 dans presence)
-   - Email : 16 octets (vs 32 dans presence)
-   - Nom : 8 octets (vs 16 dans presence)
+Programme de signature numérique et gestion des formations :
 
-2. **Fonctionnalités principales** :
-   - `create_registry` : Création d'un registre avec titre et description
-   - `create_formation` : Création d'une formation liée à un registre
-   - `register_student` : Inscription d'un étudiant à une formation
-   - `create_session` : Création d'une session de formation
-   - `mark_presence` : Marquage de la présence d'un étudiant
+1. **Gestion des Formations** :
+   - `create_formation` : Création d'une formation avec titre, description et dates
+   - `add_student_to_formation` : Ajout d'un étudiant à une formation
+   - Tailles maximales :
+     - Titre : 32 octets
+     - Description : 64 octets
+     - Email : 32 octets
+     - Nom : 16 octets
+   - Attributs :
+     - Start date / End date
+     - Student count
+     - Session count
+     - Created at timestamp
 
-3. **Structures de données** :
-   - `Registry` : Gestion des registres
-   - `Formation` : Informations sur les formations
+2. **Gestion des Sessions** :
+   - `create_session` : Création d'une session avec titre, description et horaires
+   - `mark_presence` : Enregistrement de la présence d'un étudiant
+   - Attributs :
+     - Start time / End time
+     - Created at timestamp
+
+3. **Structures de Données** :
+   - `Formation` : Informations sur la formation
    - `Student` : Données des étudiants
    - `Session` : Détails des sessions
    - `Presence` : Enregistrement des présences
 
-4. **Gestion des erreurs** :
-   - `ErrorCode` enum pour gérer les erreurs de validation des champs
+### Caractéristiques Communes
 
-Les deux programmes sont complémentaires :
-- `alyra_sign_registry` gère la structure hiérarchique (registre → formation → étudiant)
-- `alyra_sign_presence` se concentre sur la gestion des événements et des présences
-
-
-### Dependencies
-
-```
-solana --version
-solana-cli 2.1.16 (src:5002c630; feat:3271415109, client:Agave)
-```
-
-```
-anchor --version
-anchor-cli 0.30.1 (@coral-xyz)
-```
-
-```
-nvm --version
-0.39.3
-```
-
-```
-node --version
-v23.10.0
-```
-
-```
-avm --version
-avm 0.31.0
-```
-
-```
-rustc --version
-rustc 1.85.0 (4d91de4e4 2025-02-17)
-```
-
-```
-cargo --version
-cargo 1.85.0 (d73d2caf9 2024-12-31)
-```
+- Utilisation d'Anchor Framework (v0.27.0)
+- Compatible avec Solana v1.18.2
+- Gestion des erreurs via `ErrorCode` enum
+- Utilisation de seeds pour la dérivation des PDAs
+- Validation des données d'entrée
+- Timestamps automatiques pour la création des comptes
+- Gestion des compteurs (formation_count, student_count, etc.)
+- Vérification des autorités pour les opérations sensibles
 
 ## Authors
 
@@ -116,13 +142,18 @@ cargo 1.85.0 (d73d2caf9 2024-12-31)
 
 * Gabriel Forestier
 
-## Version History
 
-* 0.1
-    * Initial Release
+### Dependencies
 
-* 0.2
-    * Erreur recurente et correction des problèmes de compatibilité avec la dépendance ahash (à corriger)
+```
+solana-cli : 1.18.2
+anchor-cli : 0.27.0
+nvm : 0.39.3
+node : v23.10.0
+avm : 0.31.0
+rustc : 1.72.0
+cargo : 1.72.0
+```
 
 
 

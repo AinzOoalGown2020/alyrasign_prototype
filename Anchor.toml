@@ -1,13 +1,13 @@
 [toolchain]
-anchor_version = "0.30.1"
+anchor_version = "0.27.0"
 
 [features]
 resolution = true
 skip-lint = false
 
 [programs.devnet]
-alyra_sign_presence = "Ao4GvKFFuGazwP3VoiJkgQ1Z1vGLGoMfRQvcGdBpSgEH"
-alyra_sign_registry = "CLexS8jaWL7g5cSf4HyqyueHazNxBLoHFuAmETj8HKXk"
+alyra_sign_presence = "45bABCXebKAgUdv5XYveewzCtcxZ7fmisyeoo8rbFymZ"
+alyra_sign_registry = "4PU2tkWkdTUD4SwczHkc5ttGoRS3hAVQqVfc7gThfRWC"
 
 [registry]
 url = "https://api.apr.dev"

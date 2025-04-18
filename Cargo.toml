@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "programs/alyra_sign_registry",
-    "programs/alyra_sign_presence"
+    "programs/alyra_sign_presence",
+    "programs/alyra_sign"
 ]
 resolver = "2"
 

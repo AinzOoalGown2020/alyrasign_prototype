@@ -1,98 +1,64 @@
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import Link from 'next/link'
-
-interface Formation {
-  id: string
-  title: string
-  description: string
-  startDate: Date
-  endDate: Date
-  sessionCount: number
-  isSynced: boolean
-  lastSyncDate?: Date
-  walletAddress?: string
-}
+import { Formation } from '@/types/formation'
+import { useRouter } from 'next/navigation'
 
 interface FormationCardProps {
   formation: Formation
   onEdit: () => void
   onDelete: () => void
-  onSync: () => void
 }
 
-export function FormationCard({ formation, onEdit, onDelete, onSync }: FormationCardProps) {
+export function FormationCard({
+  formation,
+  onEdit,
+  onDelete,
+}: FormationCardProps) {
+  const router = useRouter()
+
+  const handleManageSessions = () => {
+    router.push(`/formateur/sessions?formationId=${formation.id}`)
+  }
+
   return (
-    <div className="card space-y-4">
-      <div className="flex justify-between items-start">
-        <h3 className="text-xl font-semibold text-gray-900">{formation.title}</h3>
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="flex justify-between items-start mb-4">
+        <h3 className="text-xl font-semibold text-gray-900">
+          {formation.titre}
+        </h3>
         <div className="flex space-x-2">
           <button
             onClick={onEdit}
-            className="btn btn-secondary"
+            className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800"
           >
             Modifier
           </button>
           <button
             onClick={onDelete}
-            className="btn bg-red-600 text-white hover:bg-red-700"
+            className="px-3 py-1 text-sm text-red-600 hover:text-red-800"
           >
             Supprimer
           </button>
         </div>
       </div>
 
-      <p className="text-gray-600">{formation.description}</p>
+      <p className="text-gray-600 mb-4">{formation.description}</p>
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <span className="font-medium">Date de début :</span>
-          <p>{format(formation.startDate, 'dd MMMM yyyy', { locale: fr })}</p>
-        </div>
-        <div>
-          <span className="font-medium">Date de fin :</span>
-          <p>{format(formation.endDate, 'dd MMMM yyyy', { locale: fr })}</p>
-        </div>
-      </div>
-
-      <div className="flex justify-between items-center">
-        <span className="text-sm text-gray-500">
-          Sessions : {formation.sessionCount}
-        </span>
-        {formation.walletAddress && (
-          <a
-            href={`https://explorer.solana.com/address/${formation.walletAddress}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-primary-600 hover:text-primary-700"
-          >
-            Voir sur Solana Explorer
-          </a>
-        )}
-      </div>
-
-      {formation.lastSyncDate && (
-        <p className="text-sm text-gray-500">
-          Dernière synchronisation : {format(formation.lastSyncDate, 'dd/MM/yyyy HH:mm', { locale: fr })}
+      <div className="text-sm text-gray-500 mb-4">
+        <p>
+          Du {format(formation.dateDebut, 'dd MMMM yyyy', { locale: fr })} au{' '}
+          {format(formation.dateFin, 'dd MMMM yyyy', { locale: fr })}
         </p>
-      )}
-
-      <div className="flex justify-between items-center pt-4 border-t">
-        <Link
-          href={`/admin/sessions?formationId=${formation.id}`}
-          className="btn btn-primary"
-        >
-          Gérer les Sessions
-        </Link>
-        {!formation.isSynced && (
-          <button
-            onClick={onSync}
-            className="btn bg-secondary-600 text-white hover:bg-secondary-700"
-          >
-            Synchroniser
-          </button>
-        )}
+        <p>Sessions: {formation.sessions.length}</p>
       </div>
+
+      <button
+        onClick={handleManageSessions}
+        className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+      >
+        Gérer les Sessions
+      </button>
     </div>
   )
 } 

@@ -222,7 +222,7 @@ validerPresence(sessionId: string, studentAddress: string)
 * Gabriel Forestier
 
 
-### Dependencies
+## Dépendances
 
 ```
 solana-cli : 1.18.2

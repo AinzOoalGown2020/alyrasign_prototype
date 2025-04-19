@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
 import { useBlockchain } from './useBlockchain'
 import { PublicKey } from '@solana/web3.js'
 
@@ -14,8 +14,6 @@ export interface Etudiant {
 }
 
 export interface EtudiantInput {
-  walletAddress: string
-  role: 'etudiant' | 'formateur'
   firstName?: string
   lastName?: string
   email?: string
@@ -40,18 +38,22 @@ const mockEtudiants: Etudiant[] = [
 ]
 
 export function useEtudiants() {
-  const queryClient = useQueryClient()
   const { program, registerAttendee } = useBlockchain()
+  const [etudiants, setEtudiants] = useState<Etudiant[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
-  // Récupération des étudiants
-  const { data: etudiants = [], isLoading } = useQuery({
-    queryKey: ['etudiants'],
-    queryFn: async () => {
-      if (!program) return []
+  useEffect(() => {
+    const fetchEtudiants = async () => {
+      if (!program) {
+        setEtudiants([])
+        setIsLoading(false)
+        return
+      }
 
       try {
         const registeredAttendees = await program.account.registeredAttendee.all()
-        return registeredAttendees.map((attendee: any) => ({
+        setEtudiants(registeredAttendees.map((attendee: any) => ({
           id: attendee.publicKey.toString(),
           walletAddress: attendee.account.attendee.toString(),
           role: 'etudiant',
@@ -60,20 +62,22 @@ export function useEtudiants() {
           firstName: attendee.account.firstName,
           lastName: attendee.account.lastName,
           email: attendee.account.email,
-        }))
+        })))
       } catch (error) {
         console.error('Error fetching etudiants:', error)
-        return []
+        setError(error as Error)
+      } finally {
+        setIsLoading(false)
       }
-    },
-    enabled: !!program,
-  })
+    }
 
-  // Création d'un étudiant
-  const createEtudiant = useMutation({
-    mutationFn: async (data: EtudiantInput) => {
-      if (!program) throw new Error('Program not initialized')
+    fetchEtudiants()
+  }, [program])
 
+  const createEtudiant = async (data: EtudiantInput) => {
+    if (!program) throw new Error('Program not initialized')
+
+    try {
       // Pour le développement, nous utilisons la première formation disponible
       const events = await program.account.event.all()
       if (events.length === 0) throw new Error('No events found')
@@ -87,47 +91,59 @@ export function useEtudiants() {
         data.email || ''
       )
 
+      // Rafraîchir la liste des étudiants
+      const registeredAttendees = await program.account.registeredAttendee.all()
+      setEtudiants(registeredAttendees.map((attendee: any) => ({
+        id: attendee.publicKey.toString(),
+        walletAddress: attendee.account.attendee.toString(),
+        role: 'etudiant',
+        isAuthorized: true,
+        lastSyncDate: new Date(),
+        firstName: attendee.account.firstName,
+        lastName: attendee.account.lastName,
+        email: attendee.account.email,
+      })))
+
       return {
         id: Date.now().toString(),
         ...data,
         isAuthorized: true,
         lastSyncDate: new Date(),
       }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['etudiants'] })
-    },
-  })
+    } catch (err) {
+      setError(err as Error)
+      throw err
+    }
+  }
 
-  // Mise à jour d'un étudiant
-  const updateEtudiant = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: EtudiantInput }) => {
+  const updateEtudiant = async (id: string, data: EtudiantInput) => {
+    try {
       // TODO: Implémenter la mise à jour sur la blockchain
       console.log('Updating etudiant:', id, data)
       return { id, ...data, isAuthorized: true }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['etudiants'] })
-    },
-  })
+    } catch (err) {
+      setError(err as Error)
+      throw err
+    }
+  }
 
-  // Suppression d'un étudiant
-  const deleteEtudiant = useMutation({
-    mutationFn: async (id: string) => {
+  const deleteEtudiant = async (id: string) => {
+    try {
       // TODO: Implémenter la suppression sur la blockchain
       console.log('Deleting etudiant:', id)
       return id
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['etudiants'] })
-    },
-  })
+    } catch (err) {
+      setError(err as Error)
+      throw err
+    }
+  }
 
   return {
     etudiants,
     isLoading,
-    createEtudiant: createEtudiant.mutateAsync,
-    updateEtudiant: (id: string, data: EtudiantInput) => updateEtudiant.mutateAsync({ id, data }),
-    deleteEtudiant: deleteEtudiant.mutateAsync,
+    error,
+    createEtudiant,
+    updateEtudiant,
+    deleteEtudiant,
   }
 } 

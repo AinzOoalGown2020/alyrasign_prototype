@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
 import { useBlockchain } from './useBlockchain'
 import { PublicKey } from '@solana/web3.js'
 
@@ -19,64 +19,108 @@ export interface FormationInput {
 
 export function useFormations() {
   const { program } = useBlockchain()
-  const queryClient = useQueryClient()
+  const [formations, setFormations] = useState<Formation[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
-  const { data: formations = [], isLoading } = useQuery({
-    queryKey: ['formations'],
-    queryFn: async () => {
-      if (!program) return []
-      
+  useEffect(() => {
+    const fetchFormations = async () => {
+      if (!program) {
+        setFormations([])
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        const formations = await program.account.formation.all()
+        setFormations(formations.map(formation => ({
+          pubkey: formation.publicKey,
+          id: formation.account.id,
+          title: formation.account.title,
+          description: formation.account.description,
+          studentCount: formation.account.studentCount,
+          createdAt: formation.account.createdAt,
+        })))
+      } catch (err) {
+        setError(err as Error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchFormations()
+  }, [program])
+
+  const createFormation = async (input: FormationInput) => {
+    if (!program) throw new Error('Program not initialized')
+    try {
+      await program.methods.createFormation(input.id, input.title, input.description)
+      // Rafraîchir la liste des formations
       const formations = await program.account.formation.all()
-      return formations.map(formation => ({
+      setFormations(formations.map(formation => ({
         pubkey: formation.publicKey,
         id: formation.account.id,
         title: formation.account.title,
         description: formation.account.description,
         studentCount: formation.account.studentCount,
         createdAt: formation.account.createdAt,
-      }))
-    },
-  })
+      })))
+    } catch (err) {
+      setError(err as Error)
+      throw err
+    }
+  }
 
-  const createFormation = useMutation({
-    mutationFn: async (input: FormationInput) => {
-      if (!program) throw new Error('Program not initialized')
-      await program.methods.createFormation(input.id, input.title, input.description)
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['formations'] })
-    },
-  })
-
-  const updateFormation = useMutation({
-    mutationFn: async ({ pubkey, input }: { pubkey: PublicKey, input: FormationInput }) => {
-      if (!program) throw new Error('Program not initialized')
+  const updateFormation = async ({ pubkey, input }: { pubkey: PublicKey, input: FormationInput }) => {
+    if (!program) throw new Error('Program not initialized')
+    try {
       await program.methods.updateFormation(input.title, input.description)
         .accounts({
           formation: pubkey,
         })
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['formations'] })
-    },
-  })
+      // Rafraîchir la liste des formations
+      const formations = await program.account.formation.all()
+      setFormations(formations.map(formation => ({
+        pubkey: formation.publicKey,
+        id: formation.account.id,
+        title: formation.account.title,
+        description: formation.account.description,
+        studentCount: formation.account.studentCount,
+        createdAt: formation.account.createdAt,
+      })))
+    } catch (err) {
+      setError(err as Error)
+      throw err
+    }
+  }
 
-  const deleteFormation = useMutation({
-    mutationFn: async (pubkey: PublicKey) => {
-      if (!program) throw new Error('Program not initialized')
+  const deleteFormation = async (pubkey: PublicKey) => {
+    if (!program) throw new Error('Program not initialized')
+    try {
       await program.methods.deleteFormation()
         .accounts({
           formation: pubkey,
         })
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['formations'] })
-    },
-  })
+      // Rafraîchir la liste des formations
+      const formations = await program.account.formation.all()
+      setFormations(formations.map(formation => ({
+        pubkey: formation.publicKey,
+        id: formation.account.id,
+        title: formation.account.title,
+        description: formation.account.description,
+        studentCount: formation.account.studentCount,
+        createdAt: formation.account.createdAt,
+      })))
+    } catch (err) {
+      setError(err as Error)
+      throw err
+    }
+  }
 
   return {
     formations,
     isLoading,
+    error,
     createFormation,
     updateFormation,
     deleteFormation,

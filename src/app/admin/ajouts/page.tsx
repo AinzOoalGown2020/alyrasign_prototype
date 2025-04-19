@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Navbar } from '@/components/layout/Navbar'
+import { AppBar } from '@/components/layout/AppBar'
 import { useEtudiants } from '@/hooks/useEtudiants'
 import { EtudiantInput } from '@/hooks/useEtudiants'
 
@@ -35,7 +35,7 @@ export default function AjoutsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      <AppBar />
       
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">

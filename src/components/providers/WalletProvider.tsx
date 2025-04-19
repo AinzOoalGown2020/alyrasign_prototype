@@ -1,22 +1,72 @@
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
-import { ConnectionProvider, WalletProvider as SolanaWalletProvider } from '@solana/wallet-adapter-react'
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
-import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets'
-import { clusterApiUrl } from '@solana/web3.js'
-import { useMemo } from 'react'
+"use client";
 
-require('@solana/wallet-adapter-react-ui/styles.css')
+import { FC, ReactNode, useMemo, useEffect } from 'react';
+import { ConnectionProvider, WalletProvider as SolanaWalletProvider, useWallet } from '@solana/wallet-adapter-react';
+import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
+import { useAutoConnect } from '../../contexts/AutoConnectProvider';
+import { clusterApiUrl } from '@solana/web3.js';
+import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
 
-export function WalletProvider({ children }: { children: React.ReactNode }) {
-  const network = WalletAdapterNetwork.Devnet
-  const endpoint = useMemo(() => clusterApiUrl(network), [network])
-  const wallets = useMemo(() => [new PhantomWalletAdapter()], [])
+interface WalletProviderProps {
+  children: ReactNode;
+}
+
+const WalletStateManager: FC<{ children: ReactNode }> = ({ children }) => {
+  const { connected, publicKey } = useWallet();
+
+  useEffect(() => {
+    if (connected && publicKey) {
+      const address = publicKey.toString();
+      console.log('WalletStateManager - Wallet connecté:', address);
+      localStorage.setItem('walletConnected', 'true');
+      localStorage.setItem('walletAddress', address);
+    } else {
+      console.log('WalletStateManager - Wallet déconnecté');
+      localStorage.removeItem('walletConnected');
+      localStorage.removeItem('walletAddress');
+    }
+  }, [connected, publicKey]);
+
+  return <>{children}</>;
+};
+
+export const WalletProvider: FC<WalletProviderProps> = ({ children }) => {
+  const { autoConnect } = useAutoConnect();
+
+  // Configuration du endpoint Solana
+  const endpoint = useMemo(() => {
+    console.log('WalletProvider - Initialisation endpoint');
+    return clusterApiUrl('devnet');
+  }, []);
+
+  // Configuration des wallets supportés
+  const wallets = useMemo(() => {
+    console.log('WalletProvider - Initialisation des wallets');
+    const walletList = [
+      new PhantomWalletAdapter(),
+      new SolflareWalletAdapter()
+    ];
+    console.log('WalletProvider - Wallets configurés:', walletList.map(w => w.name));
+    return walletList;
+  }, []);
+
+  console.log('WalletProvider - Rendu avec:', {
+    endpoint,
+    autoConnect,
+    walletsCount: wallets.length
+  });
 
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <SolanaWalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>{children}</WalletModalProvider>
+      <SolanaWalletProvider wallets={wallets} autoConnect={autoConnect}>
+        <WalletModalProvider>
+          <WalletStateManager>
+            {children}
+          </WalletStateManager>
+        </WalletModalProvider>
       </SolanaWalletProvider>
     </ConnectionProvider>
-  )
-} 
+  );
+};
+
+export default WalletProvider; 

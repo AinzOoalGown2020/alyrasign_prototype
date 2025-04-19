@@ -1,7 +1,7 @@
 import { Inter } from 'next/font/google'
-import { WalletProvider } from '@/components/providers/WalletProvider'
-import { Navbar } from '@/components/layout/Navbar'
+import ClientLayout from './ClientLayout'
 import '@/styles/globals.css'
+import '@solana/wallet-adapter-react-ui/styles.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,14 +18,9 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={inter.className}>
-        <WalletProvider>
-          <div className="min-h-screen bg-gray-50">
-            <Navbar />
-            <main className="container mx-auto px-4 py-8">
-              {children}
-            </main>
-          </div>
-        </WalletProvider>
+        <ClientLayout>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   )

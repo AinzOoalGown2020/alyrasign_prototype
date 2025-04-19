@@ -29,61 +29,61 @@ export function FormationModal({ formation, onSave, onClose }: FormationModalPro
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-xl font-semibold mb-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+        <h2 className="text-xl font-semibold mb-4 !text-white">
           {formation ? 'Modifier la Formation' : 'Créer une Formation'}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium !text-gray-200">
               Titre
             </label>
             <input
               type="text"
               value={titre}
               onChange={(e) => setTitre(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 !text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium !text-gray-200">
               Description
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 !text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
               rows={3}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium !text-gray-200">
               Date de début
             </label>
             <input
               type="date"
               value={dateDebut}
               onChange={(e) => setDateDebut(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 !text-white focus:border-blue-500 focus:ring-blue-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium !text-gray-200">
               Date de fin
             </label>
             <input
               type="date"
               value={dateFin}
               onChange={(e) => setDateFin(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 !text-white focus:border-blue-500 focus:ring-blue-500"
               required
             />
           </div>
@@ -92,13 +92,13 @@ export function FormationModal({ formation, onSave, onClose }: FormationModalPro
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              className="px-4 py-2 text-sm font-medium !text-gray-200 bg-gray-700 rounded-md hover:bg-gray-600"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              className="px-4 py-2 text-sm font-medium !text-white bg-blue-600 rounded-md hover:bg-blue-700"
             >
               {formation ? 'Modifier' : 'Créer'}
             </button>

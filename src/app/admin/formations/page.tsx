@@ -1,100 +1,82 @@
-'use client'
+"use client"
 
 import { useState } from 'react'
+import { useFormations } from '@/hooks/useFormations'
 import { FormationCard } from '@/components/formations/FormationCard'
 import { FormationModal } from '@/components/formations/FormationModal'
-import { useFormations } from '@/hooks/useFormations'
-import { Navbar } from '@/components/layout/Navbar'
+import { Formation } from '@/types/formation'
 
 export default function FormationsPage() {
+  const { formations, isLoading, error, createFormation, updateFormation, deleteFormation } = useFormations()
+  const [selectedFormation, setSelectedFormation] = useState<Formation | undefined>()
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedFormation, setSelectedFormation] = useState<any>(null)
-  const { formations, isLoading, createFormation, updateFormation, deleteFormation, syncFormation } = useFormations()
 
-  const handleCreateFormation = async (data: any) => {
-    await createFormation(data)
-    setIsModalOpen(false)
+  const handleCreate = () => {
+    setSelectedFormation(undefined)
+    setIsModalOpen(true)
   }
 
-  const handleEditFormation = async (data: any) => {
-    await updateFormation(selectedFormation.id, data)
-    setIsModalOpen(false)
-    setSelectedFormation(null)
+  const handleEdit = (formation: Formation) => {
+    setSelectedFormation(formation)
+    setIsModalOpen(true)
   }
 
-  const handleDeleteFormation = async (id: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette formation ?')) {
-      await deleteFormation(id)
+  const handleSave = async (formationData: Omit<Formation, 'id' | 'sessions'>) => {
+    try {
+      if (selectedFormation) {
+        await updateFormation(selectedFormation.id, formationData)
+      } else {
+        await createFormation(formationData)
+      }
+      setIsModalOpen(false)
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error)
     }
   }
 
-  const handleSyncFormation = async (id: string) => {
-    await syncFormation(id)
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette formation ?')) {
+      try {
+        await deleteFormation(id)
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error)
+      }
+    }
   }
 
+  if (isLoading) return <div>Chargement...</div>
+  if (error) return <div>Erreur: {error.message}</div>
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">
-              Gestion des Formations
-            </h1>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="btn btn-primary"
-              >
-                Créer une Formation
-              </button>
-              <button
-                onClick={() => {/* TODO: Implement sync all */}}
-                className="btn bg-secondary-600 text-white hover:bg-secondary-700"
-              >
-                Synchroniser avec la Blockchain
-              </button>
-            </div>
-          </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Gestion des Formations</h1>
+        <button
+          onClick={handleCreate}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Nouvelle Formation
+        </button>
+      </div>
 
-          {isLoading ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Chargement des formations...</p>
-            </div>
-          ) : formations.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Aucune formation disponible</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {formations.map((formation) => (
-                <FormationCard
-                  key={formation.id}
-                  formation={formation}
-                  onEdit={() => {
-                    setSelectedFormation(formation)
-                    setIsModalOpen(true)
-                  }}
-                  onDelete={() => handleDeleteFormation(formation.id)}
-                  onSync={() => handleSyncFormation(formation.id)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {formations.map((formation) => (
+          <FormationCard
+            key={formation.id}
+            formation={formation}
+            onEdit={() => handleEdit(formation)}
+            onDelete={() => handleDelete(formation.id)}
+          />
+        ))}
+      </div>
 
-      <FormationModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setSelectedFormation(null)
-        }}
-        onSubmit={selectedFormation ? handleEditFormation : handleCreateFormation}
-        initialData={selectedFormation}
-        mode={selectedFormation ? 'edit' : 'create'}
-      />
+      {isModalOpen && (
+        <FormationModal
+          formation={selectedFormation}
+          onSave={handleSave}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </div>
   )
 } 

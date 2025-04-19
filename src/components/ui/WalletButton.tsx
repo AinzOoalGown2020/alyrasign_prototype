@@ -1,26 +1,36 @@
-import { useWallet } from '@/hooks/useWallet'
+'use client';
+
+import dynamic from 'next/dynamic';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useEffect } from 'react';
+
+const WalletMultiButtonDynamic = dynamic(
+  async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
+  { ssr: false }
+);
 
 export function WalletButton() {
-  const { connect, disconnect, wallet } = useWallet()
+  const { connected, publicKey } = useWallet();
 
-  if (wallet) {
-    return (
-      <button
-        onClick={disconnect}
-        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-      >
-        {wallet.publicKey?.toString().slice(0, 4)}...
-        {wallet.publicKey?.toString().slice(-4)}
-      </button>
-    )
-  }
+  useEffect(() => {
+    if (connected && publicKey) {
+      console.log('Wallet connected:', publicKey.toString());
+    }
+  }, [connected, publicKey]);
 
   return (
-    <button
-      onClick={connect}
-      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-    >
-      Connecter Wallet
-    </button>
-  )
+    <WalletMultiButtonDynamic 
+      className="btn-primary"
+      style={{ 
+        backgroundColor: 'rgb(147, 51, 234)',
+        color: 'white',
+        padding: '0.5rem 1rem',
+        borderRadius: '0.5rem',
+        fontWeight: '500',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem'
+      }}
+    />
+  );
 } 

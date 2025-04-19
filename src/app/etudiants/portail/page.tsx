@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Navbar } from '@/components/layout/Navbar'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useFormations } from '@/hooks/useFormations'
 import { FormationCard } from '@/components/formations/FormationCard'
@@ -21,100 +20,86 @@ export default function PortailEtudiantPage() {
         return true
       })
       setEtudiantFormations(formationsEtudiant)
-
+      
       // Trouver la prochaine session
       // Cette logique serait également gérée par la blockchain dans une implémentation réelle
       if (formationsEtudiant.length > 0) {
-        // Simulation: la première formation a la prochaine session
-        setProchaineSession(formationsEtudiant[0])
+        const toutesSessions = formationsEtudiant.flatMap(formation => 
+          formation.sessions || []
+        )
+        
+        if (toutesSessions.length > 0) {
+          const sessionsFutures = toutesSessions.filter(session => 
+            new Date(session.date) > new Date()
+          )
+          
+          if (sessionsFutures.length > 0) {
+            // Trier par date
+            sessionsFutures.sort((a, b) => 
+              new Date(a.date).getTime() - new Date(b.date).getTime()
+            )
+            setProchaineSession(sessionsFutures[0])
+          }
+        }
       }
     }
   }, [formations, publicKey])
 
   if (!publicKey) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="text-center py-12">
-            <p className="text-gray-500">Veuillez vous connecter avec votre wallet pour accéder au portail étudiant.</p>
-          </div>
-        </main>
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)]">
+        <h1 className="text-2xl font-bold text-white mb-4">
+          Connexion requise
+        </h1>
+        <p className="text-gray-300 mb-8 text-center">
+          Veuillez vous connecter avec votre wallet pour accéder au portail étudiant.
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
+    <div className="space-y-8">
+      <h1 className="text-3xl font-bold text-white">
+        Portail Étudiant
+      </h1>
       
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-6">
-            Portail Étudiant
-          </h1>
-
+      {isLoading ? (
+        <div className="flex justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+        </div>
+      ) : (
+        <>
           {prochaineSession && (
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800">
-                    Prochaine session
-                  </h3>
-                  <div className="mt-2 text-sm text-blue-700">
-                    <p>
-                      {prochaineSession.title} - {new Date(prochaineSession.startDate).toLocaleDateString('fr-FR')}
-                    </p>
-                  </div>
-                </div>
+            <div className="card bg-purple-900/30 border-purple-500/50">
+              <h2 className="text-xl font-semibold mb-2 text-purple-300">
+                Prochaine Session
+              </h2>
+              <div className="text-white">
+                <p><span className="font-medium">Formation:</span> {prochaineSession.formation}</p>
+                <p><span className="font-medium">Date:</span> {new Date(prochaineSession.date).toLocaleDateString()}</p>
+                <p><span className="font-medium">Heure:</span> {new Date(prochaineSession.date).toLocaleTimeString()}</p>
               </div>
             </div>
           )}
-
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Mes Formations
-          </h2>
-
-          {isLoading ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Chargement des formations...</p>
-            </div>
-          ) : etudiantFormations.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Aucune formation disponible</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {etudiantFormations.map((formation) => (
-                <div key={formation.id} className="card space-y-4">
-                  <h3 className="text-xl font-semibold text-gray-900">{formation.title}</h3>
-                  <p className="text-gray-600">{formation.description}</p>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Date de début :</span>
-                      <p>{new Date(formation.startDate).toLocaleDateString('fr-FR')}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium">Date de fin :</span>
-                      <p>{new Date(formation.endDate).toLocaleDateString('fr-FR')}</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">
-                      Sessions : {formation.sessionCount}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
+          
+          <div>
+            <h2 className="text-2xl font-semibold mb-4 text-white">
+              Mes Formations
+            </h2>
+            
+            {etudiantFormations.length === 0 ? (
+              <p className="text-gray-300">Vous n'êtes inscrit à aucune formation.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {etudiantFormations.map(formation => (
+                  <FormationCard key={formation.id} formation={formation} />
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 } 

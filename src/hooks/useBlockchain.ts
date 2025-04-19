@@ -1,21 +1,50 @@
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
-import { Program, AnchorProvider, web3, utils } from '@project-serum/anchor'
+import { Program, AnchorProvider, web3, utils } from '@coral-xyz/anchor'
 import { PublicKey } from '@solana/web3.js'
 import { useMemo } from 'react'
 import idl from '../idl/alyra_sign.json'
 
-const programID = new PublicKey(process.env.NEXT_PUBLIC_SOLANA_PROGRAM_ID || '')
+// ID du programme par défaut depuis Anchor.toml
+const DEFAULT_PROGRAM_ID = '9mR7S7u8DeaQwqf6poYMUka2Dp2WjcY1GafPuMUp9GLo'
 
 export function useBlockchain() {
   const { connection } = useConnection()
   const { publicKey, sendTransaction } = useWallet()
 
+  console.log('useBlockchain - État initial:', {
+    connection: connection?.rpcEndpoint,
+    publicKey: publicKey?.toString(),
+    envProgramId: process.env.NEXT_PUBLIC_SOLANA_PROGRAM_ID,
+    defaultProgramId: DEFAULT_PROGRAM_ID
+  })
+
+  const programID = useMemo(() => {
+    try {
+      const id = process.env.NEXT_PUBLIC_SOLANA_PROGRAM_ID || DEFAULT_PROGRAM_ID
+      console.log('useBlockchain - Initialisation programID:', id)
+      return new PublicKey(id)
+    } catch (error) {
+      console.error('useBlockchain - Erreur lors de l\'initialisation du programID:', error)
+      // Retourner un PublicKey valide même en cas d'erreur
+      return new PublicKey(DEFAULT_PROGRAM_ID)
+    }
+  }, [])
+
   const provider = useMemo(() => {
-    if (!publicKey) return null
+    if (!publicKey) {
+      console.log('useBlockchain - Provider non initialisé: pas de publicKey')
+      return null
+    }
+    console.log('useBlockchain - Création du provider avec:', {
+      publicKey: publicKey.toString(),
+      connection: connection?.rpcEndpoint
+    })
     return new AnchorProvider(connection, {
       publicKey,
       signTransaction: async (tx: web3.Transaction) => {
+        console.log('useBlockchain - Signature de transaction')
         const signedTx = await sendTransaction(tx, connection)
+        console.log('useBlockchain - Transaction signée:', signedTx)
         return {
           signature: signedTx,
           publicKey,
@@ -27,27 +56,50 @@ export function useBlockchain() {
   }, [connection, publicKey, sendTransaction])
 
   const program = useMemo(() => {
-    if (!provider) return null
-    return new Program(idl as any, programID, provider)
-  }, [provider])
+    if (!provider) {
+      console.log('useBlockchain - Program non initialisé: pas de provider')
+      return null
+    }
+    try {
+      console.log('useBlockchain - Création du program avec:', {
+        programId: programID.toString(),
+        idl: idl.name
+      })
+      return new Program(idl as any, programID, provider)
+    } catch (error) {
+      console.error('useBlockchain - Erreur lors de la création du program:', error)
+      return null
+    }
+  }, [provider, programID])
 
   // Création d'une formation
   const createFormation = async (formationId: number, title: string, description: string) => {
-    if (!program || !publicKey) throw new Error('Program not initialized')
+    console.log('useBlockchain - Création formation:', { formationId, title, description })
+    if (!program || !publicKey) {
+      console.error('useBlockchain - Erreur: Program non initialisé pour createFormation')
+      throw new Error('Program not initialized')
+    }
 
     const [formationPDA] = PublicKey.findProgramAddressSync(
       [Buffer.from('formation'), Buffer.from(formationId.toString())],
       programID
     )
+    console.log('useBlockchain - PDA Formation:', formationPDA.toString())
 
-    await program.methods
-      .createFormation(formationId, title, description)
-      .accounts({
-        formation: formationPDA,
-        authority: publicKey,
-        systemProgram: web3.SystemProgram.programId,
-      })
-      .rpc()
+    try {
+      const tx = await program.methods
+        .createFormation(formationId, title, description)
+        .accounts({
+          formation: formationPDA,
+          authority: publicKey,
+          systemProgram: web3.SystemProgram.programId,
+        })
+        .rpc()
+      console.log('useBlockchain - Formation créée avec succès:', tx)
+    } catch (error) {
+      console.error('useBlockchain - Erreur lors de la création de la formation:', error)
+      throw error
+    }
   }
 
   // Création d'une session
@@ -71,27 +123,20 @@ export function useBlockchain() {
   }
 
   // Enregistrement d'un étudiant
-  const registerStudent = async (formationPubkey: PublicKey, firstName: string, lastName: string, email: string) => {
+  const registerAttendee = async (eventPubkey: PublicKey, firstName: string, lastName: string, email: string) => {
     if (!program || !publicKey) throw new Error('Program not initialized')
 
-    const studentCount = await program.account.formation.fetch(formationPubkey).then(formation => formation.studentCount)
-
-    const [studentPDA] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('student'),
-        formationPubkey.toBuffer(),
-        publicKey.toBuffer(),
-        Buffer.from((studentCount + 1).toString())
-      ],
+    const [attendeePDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from('attendee'), eventPubkey.toBuffer(), publicKey.toBuffer()],
       programID
     )
 
     await program.methods
-      .registerStudent(firstName, lastName, email)
+      .registerAttendee(firstName, lastName, email)
       .accounts({
-        student: studentPDA,
-        formation: formationPubkey,
-        studentWallet: publicKey,
+        attendee: attendeePDA,
+        event: eventPubkey,
+        attendeeWallet: publicKey,
         signer: publicKey,
         systemProgram: web3.SystemProgram.programId,
       })
@@ -126,9 +171,10 @@ export function useBlockchain() {
 
   return {
     program,
+    provider,
     createFormation,
     createSession,
-    registerStudent,
+    registerAttendee,
     markPresence,
   }
 } 

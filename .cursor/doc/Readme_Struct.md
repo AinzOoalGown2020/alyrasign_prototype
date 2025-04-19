@@ -1,18 +1,4 @@
-# AlyraSign
-
-AlyraSign est un projet d'étude réalisé dans le cadre d'une formation dispensée par Alyra.
-
-
-## Description
-
-AlyraSign a pour objectif d'enregistrer la présence de participants à des évènements, en utilisant la blockchain Solana.
-Les exemples sont nombreux : étudiants assistant à des formations, actionnaires lors d'une assemblée générale, etc.
-
-A chaque évènement sont reliés :
-* des participants autorisés
-* une ou plusieurs sessions qui ont lieu à différentes dates
-
-Les participants doivent pouvoir signer numériquement la feuille de présence lors d'une session.
+# Documentation AlyraSign Prototype
 
 ## Structure du Programme
 
@@ -202,37 +188,25 @@ marquerPresence(sessionId: string, studentAddress: string)
 validerPresence(sessionId: string, studentAddress: string)
 ```
 
-### Caractéristiques Communes
+## Sécurité et Permissions
 
-- Utilisation d'Anchor Framework (v0.27.0)
-- Compatible avec Solana v1.18.2
-- Gestion des erreurs via `ErrorCode` enum
-- Utilisation de seeds pour la dérivation des PDAs
-- Validation des données d'entrée
-- Timestamps automatiques pour la création des comptes
-- Gestion des compteurs (formation_count, student_count, etc.)
-- Vérification des autorités pour les opérations sensibles
+### 1. Rôles
+- Administrateur : Accès complet
+- Formateur : Gestion des formations et sessions
+- Étudiant : Inscription et suivi des formations
 
-## Authors
+### 2. Vérifications
+- Vérification du wallet connecté
+- Vérification des droits d'accès
+- Validation des transactions
+- Protection contre les doubles inscriptions
 
-* Yannick Jesson
+## Configuration et Déploiement
 
-* Mickaël Girondeau
-
-* Gabriel Forestier
-
-
-### Dependencies
-
+### Variables d'Environnement
 ```
-solana-cli : 1.18.2
-anchor-cli : 0.27.0
-nvm : 0.39.3
-node : v23.10.0
-avm : 0.31.0
-rustc : 1.72.0
-cargo : 1.72.0
+NEXT_PUBLIC_SOLANA_PROGRAM_ID=
+NEXT_PUBLIC_ADMIN_WALLET=
+NEXT_PUBLIC_SOLANA_RPC_URL=
 ```
-
-
 

@@ -2,6 +2,13 @@
 
 AlyraSign est un projet d'étude réalisé dans le cadre d'une formation dispensée par Alyra.
 
+## Authors
+
+* Yannick Jesson
+
+* Mickaël Girondeau
+
+* Gabriel Forestier
 
 ## Description
 
@@ -212,14 +219,6 @@ validerPresence(sessionId: string, studentAddress: string)
 - Timestamps automatiques pour la création des comptes
 - Gestion des compteurs (formation_count, student_count, etc.)
 - Vérification des autorités pour les opérations sensibles
-
-## Authors
-
-* Yannick Jesson
-
-* Mickaël Girondeau
-
-* Gabriel Forestier
 
 
 ## Dépendances

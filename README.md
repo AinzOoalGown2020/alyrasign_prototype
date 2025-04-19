@@ -1,6 +1,6 @@
 # AlyraSign
 
-AlyraSign est un projet d'étude réalisé dans le cadre d'une formation dispensée par Alyra.
+AlyraSign est un projet d'étude réalisé dans le cadre d'une formation dispensée par << Alyra l'école de l'innovation >> (https://www.alyra.fr).
 
 ## Authors
 

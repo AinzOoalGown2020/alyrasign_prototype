@@ -1,12 +1,14 @@
 use anchor_lang::prelude::*;
 use anchor_lang::Space;
 
-declare_id!("HYuY8egnKBzZrbfLUYyDx64sdKiLwts3UEeKy4ZqQ73E");
+declare_id!("v69C2KjiWjhUcRTKuotEY1E1PykP4oUtFaBE8ZCg5yJ");
 
 const MAX_TITLE_LENGTH: usize = 32;
 const MAX_DESCRIPTION_LENGTH: usize = 64;
 const MAX_EMAIL_LENGTH: usize = 32;
 const MAX_NAME_LENGTH: usize = 16;
+const ACCOUNT_DISCRIMINATOR_LENGTH: usize = 8;
+const EXTRA_SPACE: usize = 128; // Marge de sécurité
 
 #[error_code]
 pub enum AlyraError {
@@ -85,6 +87,14 @@ pub mod alyra_sign {
         presence.timestamp = Clock::get()?.unix_timestamp as u32;
         Ok(())
     }
+
+    pub fn initialize_storage(ctx: Context<InitializeStorage>) -> Result<()> {
+        let storage = &mut ctx.accounts.storage;
+        storage.authority = ctx.accounts.authority.key();
+        storage.created_at = Clock::get()?.unix_timestamp as u32;
+        storage.bump = *ctx.bumps.get("storage").unwrap();
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -92,7 +102,7 @@ pub struct CreateFormation<'info> {
     #[account(
         init,
         payer = authority,
-        space = 8 + Formation::LEN,
+        space = ACCOUNT_DISCRIMINATOR_LENGTH + Formation::LEN + EXTRA_SPACE,
         seeds = [b"formation", authority.key().as_ref()],
         bump
     )]
@@ -107,7 +117,7 @@ pub struct CreateSession<'info> {
     #[account(
         init,
         payer = authority,
-        space = 8 + Session::LEN,
+        space = ACCOUNT_DISCRIMINATOR_LENGTH + Session::LEN + EXTRA_SPACE,
         seeds = [b"session", formation.key().as_ref()],
         bump
     )]
@@ -124,7 +134,7 @@ pub struct AddStudentToFormation<'info> {
     #[account(
         init,
         payer = authority,
-        space = 8 + Student::LEN,
+        space = ACCOUNT_DISCRIMINATOR_LENGTH + Student::LEN + EXTRA_SPACE,
         seeds = [b"student", formation.key().as_ref(), student_wallet.key().as_ref()],
         bump
     )]
@@ -143,7 +153,7 @@ pub struct MarkPresence<'info> {
     #[account(
         init,
         payer = student_wallet,
-        space = 8 + Presence::LEN,
+        space = ACCOUNT_DISCRIMINATOR_LENGTH + Presence::LEN + EXTRA_SPACE,
         seeds = [b"presence", student.key().as_ref(), session.key().as_ref()],
         bump
     )]
@@ -152,6 +162,21 @@ pub struct MarkPresence<'info> {
     pub session: Account<'info, Session>,
     #[account(mut)]
     pub student_wallet: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct InitializeStorage<'info> {
+    #[account(
+        init,
+        payer = authority,
+        space = ACCOUNT_DISCRIMINATOR_LENGTH + std::mem::size_of::<Storage>() + EXTRA_SPACE,
+        seeds = [b"storage"],
+        bump
+    )]
+    pub storage: Account<'info, Storage>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -227,4 +252,18 @@ impl Presence {
     pub const LEN: usize = 32 + // student
         32 + // session
         4; // timestamp
+}
+
+#[account]
+#[derive(Default)]
+pub struct Storage {
+    pub authority: Pubkey,
+    pub created_at: u32,
+    pub bump: u8,
+}
+
+impl Storage {
+    pub const LEN: usize = 32 + // authority
+        4 + // created_at
+        1; // bump
 }

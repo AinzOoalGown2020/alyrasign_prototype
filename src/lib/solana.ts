@@ -1,8 +1,9 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { Program } from '@coral-xyz/anchor'
 
 // ID du programme par défaut
-const DEFAULT_PROGRAM_ID = '9mR7S7u8DeaQwqf6poYMUka2Dp2WjcY1GafPuMUp9GLo'
+export const DEFAULT_PROGRAM_ID = 'v69C2KjiWjhUcRTKuotEY1E1PykP4oUtFaBE8ZCg5yJ'
 
 interface ProgramState {
   programExists: boolean;

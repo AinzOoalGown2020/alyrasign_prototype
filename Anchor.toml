@@ -3,19 +3,20 @@ anchor_version = "0.27.0"
 
 [features]
 resolution = true
+seeds = false
 skip-lint = false
 
 [programs.devnet]
 alyra_sign_presence = "4kYH3a5GM9Y7oLJjEhdYSFc6hmvgihfvXaCQij3AZ1J8"
 alyra_sign_registry = "3vbwWQNTZszFpr4AGcPqJ7ATuJem2MBjZWsDTTYKjKbG"
-alyra_sign = "9mR7S7u8DeaQwqf6poYMUka2Dp2WjcY1GafPuMUp9GLo"
+alyra_sign = "v69C2KjiWjhUcRTKuotEY1E1PykP4oUtFaBE8ZCg5yJ"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Devnet"
-wallet = "~/.config/solana/id.json"
+cluster = "devnet"
+wallet = "/home/yan/.config/solana/id.json"
 
 [scripts]
 copy-idl = "cp target/idl/*.json src/idl/"

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SessionCard } from '@/components/sessions/SessionCard'
 import { SessionModal } from '@/components/sessions/SessionModal'
@@ -16,7 +16,7 @@ export default function SessionsPage() {
   const [selectedSession, setSelectedSession] = useState<any>(null)
   const { sessions, isLoading, createSession, updateSession, deleteSession } = useSessions()
 
-  const handleCreateSession = async (data: any) => {
+  const handleCreateSession = useCallback(async (data: any) => {
     if (!formationPubkey) return
     await createSession.mutateAsync({
       id: sessions.length + 1,
@@ -27,9 +27,9 @@ export default function SessionsPage() {
       endTime: Math.floor(new Date(data.endTime).getTime() / 1000),
     })
     setIsModalOpen(false)
-  }
+  }, [formationPubkey, sessions.length, createSession])
 
-  const handleEditSession = async (data: any) => {
+  const handleEditSession = useCallback(async (data: any) => {
     if (!selectedSession) return
     await updateSession.mutateAsync({
       pubkey: selectedSession.pubkey,
@@ -43,13 +43,22 @@ export default function SessionsPage() {
     })
     setIsModalOpen(false)
     setSelectedSession(null)
-  }
+  }, [selectedSession, updateSession])
 
-  const handleDeleteSession = async (pubkey: PublicKey) => {
+  const handleDeleteSession = useCallback(async (pubkey: PublicKey) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette session ?')) {
       await deleteSession.mutateAsync(pubkey)
     }
-  }
+  }, [deleteSession])
+
+  const handleOpenModal = useCallback(() => {
+    setIsModalOpen(true)
+  }, [])
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false)
+    setSelectedSession(null)
+  }, [])
 
   if (!formationPubkey) {
     return (
@@ -90,7 +99,7 @@ export default function SessionsPage() {
 
         <div className="flex justify-end mb-6">
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenModal}
             className="btn-primary"
           >
             Créer une Session
@@ -125,10 +134,7 @@ export default function SessionsPage() {
 
       <SessionModal
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setSelectedSession(null)
-        }}
+        onClose={handleCloseModal}
         onSubmit={selectedSession ? handleEditSession : handleCreateSession}
         initialData={selectedSession}
         formationPubkey={new PublicKey(formationPubkey)}

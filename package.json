@@ -14,7 +14,10 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@headlessui/react": "^1.7.18",
+    "@mui/material": "^7.0.2",
     "@solana/wallet-adapter-base": "^0.9.25",
     "@solana/wallet-adapter-react": "^0.15.37",
     "@solana/wallet-adapter-react-ui": "^0.9.37",

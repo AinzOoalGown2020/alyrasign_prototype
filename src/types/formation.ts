@@ -8,6 +8,7 @@ export interface Formation {
   dateFin: Date
   formateurId: string
   sessions: Session[]
+  isSynced: boolean
 }
 
 export interface Session {

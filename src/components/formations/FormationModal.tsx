@@ -8,7 +8,7 @@ interface FormationModalProps {
 }
 
 export function FormationModal({ formation, onSave, onClose }: FormationModalProps) {
-  const [titre, setTitre] = useState(formation?.titre || '')
+  const [title, setTitle] = useState(formation?.titre || '')
   const [description, setDescription] = useState(formation?.description || '')
   const [dateDebut, setDateDebut] = useState(
     formation?.dateDebut ? formation.dateDebut.toISOString().split('T')[0] : ''
@@ -20,7 +20,7 @@ export function FormationModal({ formation, onSave, onClose }: FormationModalPro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSave({
-      titre,
+      titre: title,
       description,
       dateDebut: new Date(dateDebut),
       dateFin: new Date(dateFin),
@@ -42,8 +42,8 @@ export function FormationModal({ formation, onSave, onClose }: FormationModalPro
             </label>
             <input
               type="text"
-              value={titre}
-              onChange={(e) => setTitre(e.target.value)}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 !text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
               required
             />

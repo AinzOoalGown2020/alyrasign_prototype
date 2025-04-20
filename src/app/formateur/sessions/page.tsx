@@ -6,8 +6,8 @@ import { redirect } from 'next/navigation'
 import { useFormationStore } from '@/stores/formationStore'
 import { SessionCard } from '@/components/sessions/SessionCard'
 import { SessionModal } from '@/components/sessions/SessionModal'
-import { Session } from '@/types/formation'
 import Link from 'next/link'
+import { Session } from '@/types/formation'
 
 export default function SessionsPage({
   searchParams,
@@ -19,6 +19,7 @@ export default function SessionsPage({
   const [selectedSession, setSelectedSession] = useState<Session | undefined>()
   
   const { formations, addSession, updateSession, deleteSession } = useFormationStore()
+  
   const formation = formations.find((f) => f.id === searchParams.formationId)
 
   if (!wallet || !formation) {
@@ -53,24 +54,38 @@ export default function SessionsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <Link
-            href="/formateur"
-            className="text-blue-600 hover:text-blue-800 mb-2 inline-block"
+      <div className="flex flex-col space-y-4">
+        <Link
+          href="/formateur"
+          className="text-blue-600 hover:text-blue-800 inline-flex items-center"
+        >
+          <svg
+            className="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            ← Retour aux formations
-          </Link>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          Retour aux formations
+        </Link>
+        
+        <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">
             Sessions de {formation.titre}
           </h1>
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            onClick={handleCreateSession}
+          >
+            Créer une Session
+          </button>
         </div>
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          onClick={handleCreateSession}
-        >
-          Créer une Session
-        </button>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -80,7 +95,6 @@ export default function SessionsPage({
             session={session}
             onEdit={() => handleEditSession(session)}
             onDelete={() => deleteSession(formation.id, session.id)}
-            onManagePresences={() => {/* TODO: Implémenter la gestion des présences */}}
           />
         ))}
       </div>

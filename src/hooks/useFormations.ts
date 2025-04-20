@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useBlockchain } from './useBlockchain'
 import { PublicKey } from '@solana/web3.js'
+import BN from 'bn.js'
 
 export interface Formation {
   pubkey: PublicKey
@@ -15,6 +16,8 @@ export interface FormationInput {
   id: number
   title: string
   description: string
+  startDate: Date
+  endDate: Date
 }
 
 export function useFormations() {
@@ -54,7 +57,28 @@ export function useFormations() {
   const createFormation = async (input: FormationInput) => {
     if (!program) throw new Error('Program not initialized')
     try {
-      await program.methods.createFormation(input.id, input.title, input.description)
+      // Convertir les dates en timestamps
+      const startDate = new BN(Math.floor(input.startDate.getTime() / 1000))
+      const endDate = new BN(Math.floor(input.endDate.getTime() / 1000))
+
+      // Convertir les chaînes en tableaux de bytes
+      const titleBytes = Buffer.from(input.title.padEnd(32, '\0'))
+      const descriptionBytes = Buffer.from(input.description.padEnd(64, '\0'))
+
+      await program.methods
+        .createFormation(
+          Array.from(titleBytes),
+          Array.from(descriptionBytes),
+          startDate,
+          endDate
+        )
+        .accounts({
+          formation: program.programId,
+          authority: program.provider.publicKey,
+          systemProgram: program.programId,
+        })
+        .rpc()
+
       // Rafraîchir la liste des formations
       const formations = await program.account.formation.all()
       setFormations(formations.map(formation => ({
@@ -74,10 +98,26 @@ export function useFormations() {
   const updateFormation = async ({ pubkey, input }: { pubkey: PublicKey, input: FormationInput }) => {
     if (!program) throw new Error('Program not initialized')
     try {
-      await program.methods.updateFormation(input.title, input.description)
+      // Convertir les dates en timestamps
+      const startDate = new BN(Math.floor(input.startDate.getTime() / 1000))
+      const endDate = new BN(Math.floor(input.endDate.getTime() / 1000))
+
+      // Convertir les chaînes en tableaux de bytes
+      const titleBytes = Buffer.from(input.title.padEnd(32, '\0'))
+      const descriptionBytes = Buffer.from(input.description.padEnd(64, '\0'))
+
+      await program.methods
+        .updateFormation(
+          Array.from(titleBytes),
+          Array.from(descriptionBytes),
+          startDate,
+          endDate
+        )
         .accounts({
           formation: pubkey,
         })
+        .rpc()
+
       // Rafraîchir la liste des formations
       const formations = await program.account.formation.all()
       setFormations(formations.map(formation => ({
@@ -101,6 +141,8 @@ export function useFormations() {
         .accounts({
           formation: pubkey,
         })
+        .rpc()
+
       // Rafraîchir la liste des formations
       const formations = await program.account.formation.all()
       setFormations(formations.map(formation => ({

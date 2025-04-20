@@ -42,12 +42,10 @@ export const WalletProvider: FC<WalletProviderProps> = ({ children }) => {
   // Configuration des wallets supportés
   const wallets = useMemo(() => {
     console.log('WalletProvider - Initialisation des wallets');
-    const walletList = [
+    return [
       new PhantomWalletAdapter(),
       new SolflareWalletAdapter()
     ];
-    console.log('WalletProvider - Wallets configurés:', walletList.map(w => w.name));
-    return walletList;
   }, []);
 
   console.log('WalletProvider - Rendu avec:', {

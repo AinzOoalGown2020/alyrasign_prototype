@@ -1,7 +1,14 @@
 # AlyraSign
 
-AlyraSign est un projet d'étude réalisé dans le cadre d'une formation dispensée par Alyra.
+AlyraSign est un projet d'étude réalisé dans le cadre d'une formation dispensée par << Alyra l'école de l'innovation >> (https://www.alyra.fr).
 
+## Authors
+
+* Yannick Jesson
+
+* Mickaël Girondeau
+
+* Gabriel Forestier
 
 ## Description
 
@@ -213,16 +220,8 @@ validerPresence(sessionId: string, studentAddress: string)
 - Gestion des compteurs (formation_count, student_count, etc.)
 - Vérification des autorités pour les opérations sensibles
 
-## Authors
 
-* Yannick Jesson
-
-* Mickaël Girondeau
-
-* Gabriel Forestier
-
-
-### Dependencies
+## Dépendances
 
 ```
 solana-cli : 1.18.2

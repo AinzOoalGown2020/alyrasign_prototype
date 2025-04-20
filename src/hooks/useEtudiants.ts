@@ -5,18 +5,14 @@ import { PublicKey } from '@solana/web3.js'
 export interface Etudiant {
   id: string
   walletAddress: string
-  role: 'etudiant' | 'formateur'
+  pseudo: string
   isAuthorized: boolean
   lastSyncDate?: Date
-  firstName?: string
-  lastName?: string
-  email?: string
 }
 
 export interface EtudiantInput {
-  firstName?: string
-  lastName?: string
-  email?: string
+  pseudo: string
+  walletAddress: string
 }
 
 // Données de test pour le développement
@@ -24,21 +20,21 @@ const mockEtudiants: Etudiant[] = [
   {
     id: '1',
     walletAddress: '79ziyYSUHVNENrJVinuotWZQ2TX7n44vSeo1cgxFPzSy',
-    role: 'formateur',
+    pseudo: 'John Doe',
     isAuthorized: true,
     lastSyncDate: new Date(),
   },
   {
     id: '2',
     walletAddress: '8xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin',
-    role: 'etudiant',
+    pseudo: 'Jane Smith',
     isAuthorized: true,
     lastSyncDate: new Date(),
   },
 ]
 
 export function useEtudiants() {
-  const { program, registerAttendee } = useBlockchain()
+  const { program, createStudent } = useBlockchain()
   const [etudiants, setEtudiants] = useState<Etudiant[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -52,16 +48,13 @@ export function useEtudiants() {
       }
 
       try {
-        const registeredAttendees = await program.account.registeredAttendee.all()
-        setEtudiants(registeredAttendees.map((attendee: any) => ({
-          id: attendee.publicKey.toString(),
-          walletAddress: attendee.account.attendee.toString(),
-          role: 'etudiant',
+        const registeredStudents = await program.account.student.all()
+        setEtudiants(registeredStudents.map((student: any) => ({
+          id: student.publicKey.toString(),
+          walletAddress: student.account.wallet.toString(),
+          pseudo: student.account.pseudo,
           isAuthorized: true,
           lastSyncDate: new Date(),
-          firstName: attendee.account.firstName,
-          lastName: attendee.account.lastName,
-          email: attendee.account.email,
         })))
       } catch (error) {
         console.error('Error fetching etudiants:', error)
@@ -75,42 +68,32 @@ export function useEtudiants() {
   }, [program])
 
   const createEtudiant = async (data: EtudiantInput) => {
-    if (!program) throw new Error('Program not initialized')
+    if (!program) {
+      console.error('useEtudiants - Erreur: Program non initialisé pour createEtudiant')
+      throw new Error('Program not initialized')
+    }
 
     try {
-      // Pour le développement, nous utilisons la première formation disponible
-      const events = await program.account.event.all()
-      if (events.length === 0) throw new Error('No events found')
-
-      const eventPubkey = events[0].publicKey
-
-      await registerAttendee(
-        eventPubkey,
-        data.firstName || '',
-        data.lastName || '',
-        data.email || ''
-      )
+      const studentPDA = await createStudent(data.pseudo, data.walletAddress)
 
       // Rafraîchir la liste des étudiants
-      const registeredAttendees = await program.account.registeredAttendee.all()
-      setEtudiants(registeredAttendees.map((attendee: any) => ({
-        id: attendee.publicKey.toString(),
-        walletAddress: attendee.account.attendee.toString(),
-        role: 'etudiant',
+      const registeredStudents = await program.account.student.all()
+      setEtudiants(registeredStudents.map((student: any) => ({
+        id: student.publicKey.toString(),
+        walletAddress: student.account.wallet.toString(),
+        pseudo: student.account.pseudo,
         isAuthorized: true,
         lastSyncDate: new Date(),
-        firstName: attendee.account.firstName,
-        lastName: attendee.account.lastName,
-        email: attendee.account.email,
       })))
 
       return {
-        id: Date.now().toString(),
+        id: studentPDA.toString(),
         ...data,
         isAuthorized: true,
         lastSyncDate: new Date(),
       }
     } catch (err) {
+      console.error('useEtudiants - Erreur lors de la création de l\'étudiant:', err)
       setError(err as Error)
       throw err
     }

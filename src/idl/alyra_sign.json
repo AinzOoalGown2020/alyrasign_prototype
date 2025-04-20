@@ -23,18 +23,175 @@
       ],
       "args": [
         {
-          "name": "formationId",
-          "type": "u64"
-        },
-        {
           "name": "title",
-          "type": "string"
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
         },
         {
           "name": "description",
-          "type": "string"
+          "type": {
+            "array": [
+              "u8",
+              64
+            ]
+          }
+        },
+        {
+          "name": "startDate",
+          "type": "i64"
+        },
+        {
+          "name": "endDate",
+          "type": "i64"
         }
       ]
+    },
+    {
+      "name": "createSession",
+      "accounts": [
+        {
+          "name": "session",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "formation",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "title",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "description",
+          "type": {
+            "array": [
+              "u8",
+              64
+            ]
+          }
+        },
+        {
+          "name": "startTime",
+          "type": "i64"
+        },
+        {
+          "name": "endTime",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "addStudentToFormation",
+      "accounts": [
+        {
+          "name": "student",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "formation",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "studentWallet",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "firstName",
+          "type": {
+            "array": [
+              "u8",
+              16
+            ]
+          }
+        },
+        {
+          "name": "lastName",
+          "type": {
+            "array": [
+              "u8",
+              16
+            ]
+          }
+        },
+        {
+          "name": "email",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "markPresence",
+      "accounts": [
+        {
+          "name": "presence",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "student",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "session",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "studentWallet",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -44,20 +201,155 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "id",
-            "type": "u64"
+            "name": "authority",
+            "type": "publicKey"
           },
           {
             "name": "title",
-            "type": "string"
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
           },
           {
             "name": "description",
-            "type": "string"
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
           },
           {
-            "name": "authority",
+            "name": "startDate",
+            "type": "i64"
+          },
+          {
+            "name": "endDate",
+            "type": "i64"
+          },
+          {
+            "name": "studentCount",
+            "type": "u8"
+          },
+          {
+            "name": "sessionCount",
+            "type": "u8"
+          },
+          {
+            "name": "createdAt",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Session",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "formation",
             "type": "publicKey"
+          },
+          {
+            "name": "title",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "description",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          },
+          {
+            "name": "startTime",
+            "type": "i64"
+          },
+          {
+            "name": "endTime",
+            "type": "i64"
+          },
+          {
+            "name": "createdAt",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Student",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "formation",
+            "type": "publicKey"
+          },
+          {
+            "name": "wallet",
+            "type": "publicKey"
+          },
+          {
+            "name": "firstName",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "lastName",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "email",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "createdAt",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Presence",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "student",
+            "type": "publicKey"
+          },
+          {
+            "name": "session",
+            "type": "publicKey"
+          },
+          {
+            "name": "timestamp",
+            "type": "u32"
           }
         ]
       }
@@ -66,8 +358,8 @@
   "errors": [
     {
       "code": 6000,
-      "name": "FormationAlreadyExists",
-      "msg": "Formation with this ID already exists"
+      "name": "WrongAuthority",
+      "msg": "You are not the expected authority."
     }
   ]
-} 
+}

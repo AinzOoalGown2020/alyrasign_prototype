@@ -1,105 +1,138 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { useFormations } from '@/hooks/useFormations'
+import { useBlockchain } from '@/hooks/useBlockchain'
 import { FormationCard } from '@/components/formations/FormationCard'
+
+interface Formation {
+  id: string
+  title: string
+  description: string
+  sessions: Session[]
+}
+
+interface Session {
+  id: string
+  title: string
+  startAt: number
+  endAt: number
+  isActive: boolean
+}
 
 export default function PortailEtudiantPage() {
   const { publicKey } = useWallet()
-  const { formations, isLoading } = useFormations()
-  const [etudiantFormations, setEtudiantFormations] = useState<any[]>([])
-  const [prochaineSession, setProchaineSession] = useState<any>(null)
+  const { program } = useBlockchain()
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null)
+  const [etudiantFormations, setEtudiantFormations] = useState<Formation[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (formations.length > 0 && publicKey) {
-      // Filtrer les formations associées à l'étudiant connecté
-      // Dans une implémentation réelle, cette logique serait gérée par la blockchain
-      const formationsEtudiant = formations.filter(formation => {
-        // Simulation: l'étudiant est associé à toutes les formations pour le développement
-        return true
-      })
-      setEtudiantFormations(formationsEtudiant)
-      
-      // Trouver la prochaine session
-      // Cette logique serait également gérée par la blockchain dans une implémentation réelle
-      if (formationsEtudiant.length > 0) {
-        const toutesSessions = formationsEtudiant.flatMap(formation => 
-          formation.sessions || []
+    const checkAuthorization = async () => {
+      if (!program || !publicKey) {
+        setIsAuthorized(false)
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        // Vérifier si l'étudiant existe
+        const [studentPDA] = PublicKey.findProgramAddressSync(
+          [Buffer.from('student'), publicKey.toBuffer()],
+          program.programId
         )
-        
-        if (toutesSessions.length > 0) {
-          const sessionsFutures = toutesSessions.filter(session => 
-            new Date(session.date) > new Date()
-          )
-          
-          if (sessionsFutures.length > 0) {
-            // Trier par date
-            sessionsFutures.sort((a, b) => 
-              new Date(a.date).getTime() - new Date(b.date).getTime()
-            )
-            setProchaineSession(sessionsFutures[0])
-          }
-        }
+
+        const studentAccount = await program.account.student.fetch(studentPDA)
+        setIsAuthorized(true)
+
+        // Récupérer les formations de l'étudiant
+        const formations = await program.account.formation.all()
+        const studentFormations = formations.filter(formation => 
+          formation.account.students.includes(publicKey)
+        )
+
+        setEtudiantFormations(studentFormations.map(formation => ({
+          id: formation.publicKey.toString(),
+          title: formation.account.title,
+          description: formation.account.description,
+          sessions: formation.account.sessions.map(session => ({
+            id: session.publicKey.toString(),
+            title: session.title,
+            startAt: session.startAt.toNumber(),
+            endAt: session.endAt.toNumber(),
+            isActive: session.isActive
+          }))
+        })))
+      } catch (error) {
+        console.error('Erreur lors de la vérification de l\'autorisation:', error)
+        setIsAuthorized(false)
+      } finally {
+        setIsLoading(false)
       }
     }
-  }, [formations, publicKey])
+
+    checkAuthorization()
+  }, [program, publicKey])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white">Chargement...</div>
+      </div>
+    )
+  }
 
   if (!publicKey) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)]">
-        <h1 className="text-2xl font-bold text-white mb-4">
-          Connexion requise
-        </h1>
-        <p className="text-gray-300 mb-8 text-center">
-          Veuillez vous connecter avec votre wallet pour accéder au portail étudiant.
-        </p>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white text-center">
+          <h1 className="text-2xl font-bold mb-4">Connexion Requise</h1>
+          <p>Veuillez vous connecter avec votre wallet pour accéder au portail étudiant.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white text-center">
+          <h1 className="text-2xl font-bold mb-4">Accès Non Autorisé</h1>
+          <p>Votre wallet n'est pas reconnu comme étudiant.</p>
+          <p className="mt-2">Veuillez communiquer votre adresse wallet à l'administration pour obtenir un accès.</p>
+          <p className="mt-4 text-sm text-gray-400">Votre adresse wallet : {publicKey.toString()}</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-bold text-white">
-        Portail Étudiant
-      </h1>
-      
-      {isLoading ? (
-        <div className="flex justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-        </div>
-      ) : (
-        <>
-          {prochaineSession && (
-            <div className="card bg-purple-900/30 border-purple-500/50">
-              <h2 className="text-xl font-semibold mb-2 text-purple-300">
-                Prochaine Session
-              </h2>
-              <div className="text-white">
-                <p><span className="font-medium">Formation:</span> {prochaineSession.formation}</p>
-                <p><span className="font-medium">Date:</span> {new Date(prochaineSession.date).toLocaleDateString()}</p>
-                <p><span className="font-medium">Heure:</span> {new Date(prochaineSession.date).toLocaleTimeString()}</p>
-              </div>
+    <div className="min-h-screen bg-gray-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-white mb-8">
+          Portail Étudiant
+        </h1>
+
+        <div>
+          <h2 className="text-2xl font-semibold mb-4 text-white">
+            Mes Formations
+          </h2>
+          
+          {etudiantFormations.length === 0 ? (
+            <p className="text-gray-300">Vous n'êtes inscrit à aucune formation.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {etudiantFormations.map(formation => (
+                <FormationCard 
+                  key={formation.id} 
+                  formation={formation}
+                  currentWallet={publicKey.toString()}
+                />
+              ))}
             </div>
           )}
-          
-          <div>
-            <h2 className="text-2xl font-semibold mb-4 text-white">
-              Mes Formations
-            </h2>
-            
-            {etudiantFormations.length === 0 ? (
-              <p className="text-gray-300">Vous n'êtes inscrit à aucune formation.</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {etudiantFormations.map(formation => (
-                  <FormationCard key={formation.id} formation={formation} />
-                ))}
-              </div>
-            )}
-          </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   )
 } 

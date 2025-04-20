@@ -1,327 +1,443 @@
 "use client";
 
-import { useState, useEffect } from 'react'
-import { useWallet } from '@solana/wallet-adapter-react'
-import { useConnection } from '@solana/wallet-adapter-react'
-import { useRouter } from 'next/navigation'
-import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js'
+import { useState, useEffect } from 'react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { useRouter } from 'next/navigation';
+import { PublicKey, LAMPORTS_PER_SOL, SystemProgram, Transaction, TransactionInstruction, Keypair } from '@solana/web3.js';
+import { Box, Typography, Paper, Grid, Button, CircularProgress, Alert } from '@mui/material';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
-// Adresse du développeur avec accès complet
-const DEV_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET || "79ziyYSUHVNENrJVinuotWZQ2TX7n44vSeo1cgxFPzSy"
-
-// ID du programme par défaut
-const DEFAULT_PROGRAM_ID = '9mR7S7u8DeaQwqf6poYMUka2Dp2WjcY1GafPuMUp9GLo'
+const DEV_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET || "79ziyYSUHVNENrJVinuotWZQ2TX7n44vSeo1cgxFPzSy";
+const PROGRAM_ID = process.env.NEXT_PUBLIC_ALYRA_SIGN_PROGRAM_ID || 'v69C2KjiWjhUcRTKuotEY1E1PykP4oUtFaBE8ZCg5yJ';
+const MIN_SOL_REQUIRED = 5;
 
 interface PDAInfo {
-  name: string
-  address: string
-  balance: number
-  isInitialized: boolean
-  dataSize?: number
-  owner?: string
+  address: string;
+  balance: number;
+  isInitialized: boolean;
 }
 
 export default function AdminPage() {
-  const { wallet } = useWallet()
-  const { connection } = useConnection()
-  const router = useRouter()
+  const { wallet, publicKey } = useWallet();
+  const { connection } = useConnection();
+  const router = useRouter();
   
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [pdaList, setPdaList] = useState<PDAInfo[]>([])
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [storagePDA, setStoragePDA] = useState<PDAInfo | null>(null);
   const [programInfo, setProgramInfo] = useState<{
-    exists: boolean
-    balance: number
-    executable: boolean
-    owner: string
-  } | null>(null)
-  const [adminWallets, setAdminWallets] = useState<string[]>([DEV_ADDRESS])
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [walletAddress, setWalletAddress] = useState<string | null>(null)
+    exists: boolean;
+    balance: number;
+    executable: boolean;
+    owner: string;
+  } | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [needsFunds, setNeedsFunds] = useState(false);
+  const [pdas, setPdas] = useState<{
+    storage: { initialized: boolean; address: string; balance: number };
+    formations: { initialized: boolean; address: string; balance: number };
+    sessions: { initialized: boolean; address: string; balance: number };
+    students: { initialized: boolean; address: string; balance: number };
+  }>({
+    storage: { initialized: false, address: '', balance: 0 },
+    formations: { initialized: false, address: '', balance: 0 },
+    sessions: { initialized: false, address: '', balance: 0 },
+    students: { initialized: false, address: '', balance: 0 }
+  });
+  const [adminBalance, setAdminBalance] = useState<number>(0);
 
-  // Vérifier si l'utilisateur est autorisé
+  // Vérification de l'autorisation
   useEffect(() => {
     const checkAuthorization = () => {
-      // Récupérer l'adresse du wallet depuis le localStorage
-      const storedWalletAddress = localStorage.getItem('walletAddress')
-      const currentWalletAddress = wallet?.publicKey?.toString()
+      const currentWalletAddress = publicKey?.toString();
+      const isAdmin = currentWalletAddress === DEV_ADDRESS;
+      setIsAuthorized(isAdmin);
       
-      // Mettre à jour l'adresse du wallet
-      if (currentWalletAddress) {
-        setWalletAddress(currentWalletAddress)
-        localStorage.setItem('walletAddress', currentWalletAddress)
-      } else if (storedWalletAddress) {
-        setWalletAddress(storedWalletAddress)
+      if (!isAdmin && currentWalletAddress) {
+        router.push('/');
       }
-      
-      // Vérifier si l'utilisateur est autorisé
-      const isAdmin = currentWalletAddress === DEV_ADDRESS || storedWalletAddress === DEV_ADDRESS
-      
-      console.log('Vérification autorisation:', {
-        currentWalletAddress,
-        storedWalletAddress,
-        adminAddress: DEV_ADDRESS,
-        isAdmin,
-        walletConnected: !!wallet?.publicKey
-      })
-      
-      setIsAuthorized(isAdmin)
-      
-      if (!isAdmin && (currentWalletAddress || storedWalletAddress)) {
-        console.log('Utilisateur non autorisé, redirection vers la page d\'accueil')
-        router.push('/')
-      }
-    }
+    };
     
-    // Attendre que le wallet soit initialisé
     if (wallet) {
-      checkAuthorization()
+      checkAuthorization();
     }
-  }, [wallet, router])
+  }, [wallet, publicKey, router]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!connection) {
-        setError("Connexion à Solana non disponible")
-        setIsLoading(false)
-        return
-      }
+  // Fonction pour vérifier et initialiser les PDAs
+  const checkAndInitializePDAs = async () => {
+    if (!connection || !isAuthorized) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const programPubkey = new PublicKey(PROGRAM_ID);
       
-      setIsLoading(true)
-      setError(null)
-      
-      try {
-        // Récupérer les informations du programme
-        const programId = process.env.NEXT_PUBLIC_SOLANA_PROGRAM_ID || DEFAULT_PROGRAM_ID
-        let programPubkey: PublicKey
-        
+      // Vérification du programme
+      const programAccount = await connection.getAccountInfo(programPubkey);
+      setProgramInfo({
+        exists: !!programAccount,
+        balance: programAccount ? programAccount.lamports / LAMPORTS_PER_SOL : 0,
+        executable: programAccount?.executable || false,
+        owner: programAccount?.owner.toString() || ''
+      });
+
+      // Vérification de la balance du wallet administrateur
+      const adminPubkey = new PublicKey(DEV_ADDRESS);
+      const adminBalance = await connection.getBalance(adminPubkey);
+      setAdminBalance(adminBalance / LAMPORTS_PER_SOL);
+
+      // Vérification des PDAs
+      const checkPDAs = async () => {
+        if (!programPubkey || !publicKey) return;
+
         try {
-          programPubkey = new PublicKey(programId)
-        } catch (err) {
-          console.error("Erreur lors de la création de la clé publique:", err)
-          setError("ID de programme invalide")
-          setIsLoading(false)
-          return
-        }
-        
-        const programAccount = await connection.getAccountInfo(programPubkey)
-        
-        if (programAccount) {
-          setProgramInfo({
-            exists: true,
-            balance: programAccount.lamports / LAMPORTS_PER_SOL,
-            executable: programAccount.executable,
-            owner: programAccount.owner.toString()
-          })
-        } else {
-          setProgramInfo({
-            exists: false,
-            balance: 0,
-            executable: false,
-            owner: ''
-          })
-        }
-        
-        // Récupérer les PDAs importants
-        const pdas: PDAInfo[] = []
-        
-        try {
-          // PDA de stockage
+          // Vérification du PDA de Storage
           const [storagePDA] = PublicKey.findProgramAddressSync(
             [Buffer.from('storage')],
             programPubkey
-          )
-          const storageAccount = await connection.getAccountInfo(storagePDA)
-          pdas.push({
-            name: 'Storage',
-            address: storagePDA.toString(),
-            balance: storageAccount ? storageAccount.lamports / LAMPORTS_PER_SOL : 0,
-            isInitialized: !!storageAccount,
-            dataSize: storageAccount ? storageAccount.data.length : 0,
-            owner: storageAccount ? storageAccount.owner.toString() : undefined
-          })
+          );
+          const storageAccount = await connection.getAccountInfo(storagePDA);
+          const storageBalance = await connection.getBalance(storagePDA);
           
-          // PDA de formation (exemple avec ID 1)
-          const [formationPDA] = PublicKey.findProgramAddressSync(
-            [Buffer.from('formation'), Buffer.from('1')],
+          setPdas(prev => ({
+            ...prev,
+            storage: {
+              initialized: !!storageAccount,
+              address: storagePDA.toString(),
+              balance: storageBalance / LAMPORTS_PER_SOL
+            }
+          }));
+
+          // Vérification des autres PDAs
+          const [formationsPDA] = PublicKey.findProgramAddressSync(
+            [Buffer.from('formations')],
             programPubkey
-          )
-          const formationAccount = await connection.getAccountInfo(formationPDA)
-          pdas.push({
-            name: 'Formation #1',
-            address: formationPDA.toString(),
-            balance: formationAccount ? formationAccount.lamports / LAMPORTS_PER_SOL : 0,
-            isInitialized: !!formationAccount,
-            dataSize: formationAccount ? formationAccount.data.length : 0,
-            owner: formationAccount ? formationAccount.owner.toString() : undefined
-          })
-          
-          // PDA de session (exemple avec ID 1)
-          const [sessionPDA] = PublicKey.findProgramAddressSync(
-            [Buffer.from('session'), Buffer.from('1')],
+          );
+          const [sessionsPDA] = PublicKey.findProgramAddressSync(
+            [Buffer.from('sessions')],
             programPubkey
-          )
-          const sessionAccount = await connection.getAccountInfo(sessionPDA)
-          pdas.push({
-            name: 'Session #1',
-            address: sessionPDA.toString(),
-            balance: sessionAccount ? sessionAccount.lamports / LAMPORTS_PER_SOL : 0,
-            isInitialized: !!sessionAccount,
-            dataSize: sessionAccount ? sessionAccount.data.length : 0,
-            owner: sessionAccount ? sessionAccount.owner.toString() : undefined
-          })
-        } catch (err) {
-          console.error("Erreur lors de la récupération des PDAs:", err)
-          setError("Erreur lors de la récupération des PDAs")
+          );
+          const [studentsPDA] = PublicKey.findProgramAddressSync(
+            [Buffer.from('students')],
+            programPubkey
+          );
+
+          // Récupération des comptes et soldes
+          const [formationsAccount, sessionsAccount, studentsAccount] = await Promise.all([
+            connection.getAccountInfo(formationsPDA),
+            connection.getAccountInfo(sessionsPDA),
+            connection.getAccountInfo(studentsPDA)
+          ]);
+
+          const [formationsBalance, sessionsBalance, studentsBalance] = await Promise.all([
+            connection.getBalance(formationsPDA),
+            connection.getBalance(sessionsPDA),
+            connection.getBalance(studentsPDA)
+          ]);
+
+          setPdas(prev => ({
+            ...prev,
+            formations: {
+              initialized: !!formationsAccount,
+              address: formationsPDA.toString(),
+              balance: formationsBalance / LAMPORTS_PER_SOL
+            },
+            sessions: {
+              initialized: !!sessionsAccount,
+              address: sessionsPDA.toString(),
+              balance: sessionsBalance / LAMPORTS_PER_SOL
+            },
+            students: {
+              initialized: !!studentsAccount,
+              address: studentsPDA.toString(),
+              balance: studentsBalance / LAMPORTS_PER_SOL
+            }
+          }));
+
+        } catch (error) {
+          console.error('Erreur lors de la vérification des PDAs:', error);
+          setError('Erreur lors de la vérification des PDAs');
         }
-        
-        setPdaList(pdas)
-        
-      } catch (err) {
-        console.error('Erreur lors de la récupération des données:', err)
-        setError('Une erreur est survenue lors de la récupération des données')
-      } finally {
-        setIsLoading(false)
-      }
+      };
+
+      await checkPDAs();
+
+    } catch (err) {
+      console.error('Erreur lors de la vérification:', err);
+      setError('Une erreur est survenue lors de la vérification des comptes');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fonction pour initialiser un PDA
+  const handleInitializePDA = async (pdaType: string) => {
+    if (!connection || !publicKey || !wallet?.adapter) {
+      setError('Wallet non connecté');
+      return;
     }
     
-    if (isAuthorized) {
-      fetchData()
-    }
-  }, [connection, isAuthorized])
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Vérifier le solde du wallet
+      const walletBalance = await connection.getBalance(publicKey);
+      if (walletBalance < LAMPORTS_PER_SOL * MIN_SOL_REQUIRED) {
+        throw new Error(`Solde insuffisant. Minimum requis: ${MIN_SOL_REQUIRED} SOL`);
+      }
 
-  // Afficher un message de chargement pendant la vérification d'autorisation
+      const pdaAddress = new PublicKey(pdas[pdaType].address);
+      const pdaAccount = await connection.getAccountInfo(pdaAddress);
+      
+      // Vérifier si le PDA est déjà initialisé
+      if (pdaAccount) {
+        setPdas(prev => ({
+          ...prev,
+          [pdaType]: {
+            ...prev[pdaType],
+            initialized: true
+          }
+        }));
+        throw new Error(`Le PDA ${pdaType} est déjà initialisé`);
+      }
+
+      const transaction = new Transaction();
+      
+      // Créer l'instruction d'initialisation
+      const initInstruction = SystemProgram.createAccount({
+        fromPubkey: publicKey,
+        newAccountPubkey: pdaAddress,
+        lamports: LAMPORTS_PER_SOL * MIN_SOL_REQUIRED,
+        space: 0,
+        programId: new PublicKey(PROGRAM_ID)
+      });
+      
+      transaction.add(initInstruction);
+      
+      // Obtenir le dernier blockhash
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = publicKey;
+      
+      console.log('Transaction préparée:', {
+        pdaType,
+        pdaAddress: pdaAddress.toString(),
+        fromPubkey: publicKey.toString(),
+        lamports: LAMPORTS_PER_SOL * MIN_SOL_REQUIRED,
+        programId: PROGRAM_ID
+      });
+
+      // Envoyer la transaction pour signature via le wallet adapter
+      const signature = await wallet.adapter.sendTransaction(transaction, connection, {
+        signers: [],
+        preflightCommitment: 'confirmed',
+        maxRetries: 3
+      });
+      
+      console.log(`Transaction envoyée pour le PDA ${pdaType}:`, signature);
+      
+      // Attendre la confirmation avec timeout
+      const confirmation = await connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight
+      }, 'confirmed');
+      
+      if (confirmation.value.err) {
+        throw new Error(`Erreur de confirmation: ${confirmation.value.err.toString()}`);
+      }
+      
+      console.log(`PDA ${pdaType} initialisé avec succès:`, signature);
+      
+      // Mettre à jour l'état après l'initialisation
+      setPdas(prev => ({
+        ...prev,
+        [pdaType]: {
+          ...prev[pdaType],
+          initialized: true
+        }
+      }));
+      
+      // Rafraîchir les informations
+      await checkAndInitializePDAs();
+      
+    } catch (err) {
+      console.error(`Erreur détaillée lors de l'initialisation du PDA ${pdaType}:`, err);
+      setError(`Erreur lors de l'initialisation du PDA ${pdaType}: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Chargement initial et lors du clic sur Reload
+  useEffect(() => {
+    if (isAuthorized) {
+      checkAndInitializePDAs();
+    }
+  }, [isAuthorized]);
+
   if (!wallet) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <h1 className="text-2xl font-bold text-white mb-4">
-          Chargement...
-        </h1>
-        <p className="text-gray-300 mb-6">
-          Vérification de votre autorisation...
-        </p>
-      </div>
-    )
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h5" gutterBottom>
+          Veuillez connecter votre wallet
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+          Cette page nécessite une connexion avec un wallet Solana.
+        </Typography>
+      </Box>
+    );
   }
 
   if (!isAuthorized) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <h1 className="text-2xl font-bold text-white mb-4">
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h5" gutterBottom color="error">
           Accès non autorisé
-        </h1>
-        <p className="text-gray-300 mb-6">
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
           Vous n'avez pas les droits nécessaires pour accéder à cette page.
-        </p>
-        <p className="text-gray-300 mb-6">
-          Adresse connectée: {walletAddress || "Non connecté"}
-        </p>
-        <p className="text-gray-300 mb-6">
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Adresse connectée: {publicKey?.toString() || "Non connecté"}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
           Adresse admin requise: {DEV_ADDRESS}
-        </p>
-        <button 
+        </Typography>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          sx={{ mt: 3 }}
           onClick={() => router.push('/')}
-          className="btn btn-primary"
         >
           Retour à l'accueil
-        </button>
-      </div>
-    )
+        </Button>
+      </Box>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-white">
-        Administration
-      </h1>
-      
-      {isLoading && (
-        <div className="text-white">Chargement des données...</div>
-      )}
-      
-      {error && (
-        <div className="text-red-500 p-4 bg-red-900/30 rounded-lg">
-          {error}
-        </div>
-      )}
-      
-      {!isLoading && !error && (
-        <>
-          <div className="card">
-            <h2 className="text-xl font-semibold mb-4 text-white">
-              Informations du Programme
-          </h2>
-            {programInfo && (
-              <div className="space-y-2 text-gray-300">
-                <p><span className="font-medium">Existe:</span> {programInfo.exists ? 'Oui' : 'Non'}</p>
-                <p><span className="font-medium">Balance:</span> {programInfo.balance.toFixed(4)} SOL</p>
-                <p><span className="font-medium">Exécutable:</span> {programInfo.executable ? 'Oui' : 'Non'}</p>
-                <p><span className="font-medium">Propriétaire:</span> {programInfo.owner}</p>
-                <p><span className="font-medium">Program ID:</span> {process.env.NEXT_PUBLIC_SOLANA_PROGRAM_ID || DEFAULT_PROGRAM_ID}</p>
-              </div>
-            )}
-          </div>
-          
-          <div className="card">
-            <h2 className="text-xl font-semibold mb-4 text-white">
-              Adresses Wallet Admin
-            </h2>
-            <div className="space-y-2">
-              {adminWallets.map((address, index) => (
-                <div key={index} className="p-3 bg-gray-700/50 rounded-lg">
-                  <p className="text-gray-300 break-all">
-                    <span className="font-medium">Admin {index + 1}:</span> {address}
-                  </p>
-                </div>
-              ))}
-          </div>
-        </div>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4">
+          Administration du Programme
+        </Typography>
+        <Button 
+          variant="contained" 
+          onClick={checkAndInitializePDAs}
+          disabled={isLoading}
+        >
+          {isLoading ? <CircularProgress size={24} /> : 'Reload'}
+        </Button>
+      </Box>
 
-          <div className="card">
-            <h2 className="text-xl font-semibold mb-4 text-white">
-              Program IDs & PDAs (Program Derived Addresses)
-          </h2>
-            <div className="space-y-4">
-              {/* Program ID */}
-              <div className="p-4 bg-gray-700/50 rounded-lg">
-                <h3 className="text-lg font-medium text-white mb-2">Program ID</h3>
-                <div className="space-y-1 text-gray-300">
-                  <p><span className="font-medium">Adresse:</span> <span className="break-all">{process.env.NEXT_PUBLIC_SOLANA_PROGRAM_ID || DEFAULT_PROGRAM_ID}</span></p>
-                  <p><span className="font-medium">Balance:</span> {programInfo?.balance.toFixed(4) || '0.0000'} SOL</p>
-                  <p><span className="font-medium">Initialisé:</span> {programInfo?.exists ? 'Oui' : 'Non'}</p>
-                  <p><span className="font-medium">Exécutable:</span> {programInfo?.executable ? 'Oui' : 'Non'}</p>
-                  {programInfo?.owner && <p><span className="font-medium">Propriétaire:</span> {programInfo.owner}</p>}
-                </div>
-              </div>
-              
-              {/* PDAs */}
-              {pdaList.map((pda, index) => (
-                <div key={index} className="p-4 bg-gray-700/50 rounded-lg">
-                  <h3 className="text-lg font-medium text-white mb-2">{pda.name}</h3>
-                  <div className="space-y-1 text-gray-300">
-                    <p><span className="font-medium">Adresse:</span> <span className="break-all">{pda.address}</span></p>
-                    <p><span className="font-medium">Balance:</span> {pda.balance.toFixed(4)} SOL</p>
-                    <p><span className="font-medium">Initialisé:</span> {pda.isInitialized ? 'Oui' : 'Non'}</p>
-                    {pda.dataSize !== undefined && <p><span className="font-medium">Taille des données:</span> {pda.dataSize} octets</p>}
-                    {pda.owner && <p><span className="font-medium">Propriétaire:</span> {pda.owner}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="card">
-            <h2 className="text-xl font-semibold mb-4 text-white">
-              Statistiques du Réseau
-            </h2>
-            <div className="space-y-2 text-gray-300">
-              <p><span className="font-medium">Endpoint RPC:</span> {connection?.rpcEndpoint}</p>
-              <p><span className="font-medium">Version:</span> {connection?.version}</p>
-              <p><span className="font-medium">Commitment:</span> {connection?.commitment}</p>
-        </div>
-      </div>
-        </>
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
       )}
-    </div>
-  )
+
+      {needsFunds && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          Le compte PDA Storage nécessite au moins {MIN_SOL_REQUIRED} SOL pour être initialisé.
+          Veuillez transférer des fonds et cliquer sur "Reload".
+        </Alert>
+      )}
+
+      <Grid container spacing={3}>
+        {/* Section Initialisation des PDAs */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              État des PDAs
+            </Typography>
+            
+            {/* PDA Storage */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle1">
+                Storage PDA: {pdas.storage.initialized ? 'Initialisé' : 'Non initialisé'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Adresse: {pdas.storage.address}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Solde: {pdas.storage.balance.toFixed(4)} SOL
+              </Typography>
+              {!pdas.storage.initialized && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleInitializePDA('storage')}
+                  disabled={isLoading}
+                  sx={{ mt: 1 }}
+                >
+                  {isLoading ? <CircularProgress size={24} /> : 'Initialiser Storage'}
+                </Button>
+              )}
+            </Box>
+
+            {/* Autres PDAs */}
+            {['formations', 'sessions', 'students'].map((pdaType) => (
+              <Box key={pdaType} sx={{ mb: 2 }}>
+                <Typography variant="subtitle1">
+                  {pdaType.charAt(0).toUpperCase() + pdaType.slice(1)} PDA: {pdas[pdaType].initialized ? 'Initialisé' : 'Non initialisé'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Adresse: {pdas[pdaType].address}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Solde: {pdas[pdaType].balance.toFixed(4)} SOL
+                </Typography>
+                {!pdas[pdaType].initialized && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleInitializePDA(pdaType)}
+                    disabled={isLoading}
+                    sx={{ mt: 1 }}
+                  >
+                    {isLoading ? <CircularProgress size={24} /> : `Initialiser ${pdaType}`}
+                  </Button>
+                )}
+              </Box>
+            ))}
+          </Paper>
+        </Grid>
+
+        {/* Section Informations du Programme */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Informations du Programme Solana
+            </Typography>
+            {programInfo && (
+              <Box sx={{ mt: 2 }}>
+                <Typography><strong>Existe:</strong> {programInfo.exists ? 'Oui' : 'Non'}</Typography>
+                <Typography><strong>Balance:</strong> {programInfo.balance.toFixed(4)} SOL</Typography>
+                <Typography><strong>Exécutable:</strong> {programInfo.executable ? 'Oui' : 'Non'}</Typography>
+                <Typography><strong>Propriétaire:</strong> {programInfo.owner}</Typography>
+                <Typography><strong>Program ID:</strong> {PROGRAM_ID}</Typography>
+              </Box>
+            )}
+          </Paper>
+        </Grid>
+
+        {/* Section Wallet Admin */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Wallet Administrateur
+            </Typography>
+            <Box sx={{ mt: 2 }}>
+              <Typography><strong>Adresse:</strong> {DEV_ADDRESS}</Typography>
+              <Typography><strong>Balance:</strong> {adminBalance.toFixed(4)} SOL</Typography>
+              <Typography><strong>Initialisé:</strong> {programInfo?.exists ? 'Oui' : 'Non'}</Typography>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  );
 } 

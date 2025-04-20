@@ -349,7 +349,7 @@ export default function AdminPage() {
       <Grid container spacing={3}>
         {/* Section Initialisation des PDAs */}
         <Grid item xs={12}>
-          <Paper sx={{ p: 3 }}>
+          <Paper elevation={1} sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               État des PDAs
             </Typography>

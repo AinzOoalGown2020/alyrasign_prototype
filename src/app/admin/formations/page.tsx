@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useFormations } from '@/hooks/useFormations'
+import { useConfirm } from '@/hooks/useConfirm'
 import { FormationCard } from '@/components/formations/FormationCard'
 import { FormationModal } from '@/components/formations/FormationModal'
 import { Formation } from '@/types/formation'
@@ -13,6 +14,7 @@ export default function FormationsPage() {
   const [selectedFormation, setSelectedFormation] = useState<Formation | undefined>()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
+  const { confirm } = useConfirm()
 
   // Charger les formations de la blockchain au chargement de la page
   useEffect(() => {
@@ -52,7 +54,7 @@ export default function FormationsPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette formation ?')) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette formation ?')) {
       try {
         deleteLocalFormation(id)
       } catch (error) {

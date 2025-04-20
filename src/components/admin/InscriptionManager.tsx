@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 
 export const InscriptionManager = () => {
-  const { isAdmin, isLoading, error, sendTransaction } = useAdminTransaction();
+  const { isAdmin, isLoading, error, createPDA } = useAdminTransaction();
   const [studentAddress, setStudentAddress] = useState('');
   const [formationId, setFormationId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,14 +23,17 @@ export const InscriptionManager = () => {
 
     setIsSubmitting(true);
     try {
-      // TODO: Implémenter l'inscription d'un étudiant à une formation
-      await sendTransaction({
-        instruction: 'inscrire_etudiant',
-        data: {
-          studentAddress,
-          formationId
+      // Créer un PDA pour l'inscription
+      const inscriptionId = Date.now().toString();
+      await createPDA(
+        [Buffer.from('inscription'), Buffer.from(inscriptionId)],
+        0, // Taille des données à stocker
+        async (pda) => {
+          // TODO: Implémenter la logique d'inscription
+          // Cette fonction doit retourner une Transaction
+          throw new Error('Fonctionnalité non implémentée');
         }
-      });
+      );
 
       // Réinitialiser le formulaire
       setStudentAddress('');

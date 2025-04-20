@@ -15,6 +15,7 @@ export const FormationManager = () => {
     endDate: '',
   });
   const [selectedFormationId, setSelectedFormationId] = useState<string | null>(null);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   const handleFormationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,9 +35,10 @@ export const FormationManager = () => {
   const handleSessionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFormationId) {
-      alert('Veuillez sélectionner une formation');
+      setSessionError('Veuillez sélectionner une formation');
       return;
     }
+    setSessionError(null);
     try {
       const result = await createSession(sessionData, selectedFormationId);
       console.log('Session créée:', result);
@@ -49,6 +51,7 @@ export const FormationManager = () => {
       });
     } catch (err) {
       console.error('Erreur lors de la création de la session:', err);
+      setSessionError('Une erreur est survenue lors de la création de la session');
     }
   };
 
@@ -80,7 +83,7 @@ export const FormationManager = () => {
           fullWidth
           label="Titre"
           value={formationData.title}
-          onChange={(e) => setFormationData({ ...formationData, title: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormationData({ ...formationData, title: (e.target as HTMLInputElement).value })}
           margin="normal"
           required
         />
@@ -88,7 +91,7 @@ export const FormationManager = () => {
           fullWidth
           label="Description"
           value={formationData.description}
-          onChange={(e) => setFormationData({ ...formationData, description: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormationData({ ...formationData, description: e.target.value })}
           margin="normal"
           multiline
           rows={4}
@@ -109,11 +112,16 @@ export const FormationManager = () => {
         <Typography variant="h6" gutterBottom>
           Créer une Session
         </Typography>
+        {sessionError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {sessionError}
+          </Alert>
+        )}
         <TextField
           fullWidth
           label="Titre"
           value={sessionData.title}
-          onChange={(e) => setSessionData({ ...sessionData, title: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSessionData({ ...sessionData, title: e.target.value })}
           margin="normal"
           required
         />
@@ -121,7 +129,7 @@ export const FormationManager = () => {
           fullWidth
           label="Description"
           value={sessionData.description}
-          onChange={(e) => setSessionData({ ...sessionData, description: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSessionData({ ...sessionData, description: e.target.value })}
           margin="normal"
           multiline
           rows={4}
@@ -132,7 +140,7 @@ export const FormationManager = () => {
           label="Date de début"
           type="datetime-local"
           value={sessionData.startDate}
-          onChange={(e) => setSessionData({ ...sessionData, startDate: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSessionData({ ...sessionData, startDate: e.target.value })}
           margin="normal"
           required
           InputLabelProps={{
@@ -144,7 +152,7 @@ export const FormationManager = () => {
           label="Date de fin"
           type="datetime-local"
           value={sessionData.endDate}
-          onChange={(e) => setSessionData({ ...sessionData, endDate: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSessionData({ ...sessionData, endDate: e.target.value })}
           margin="normal"
           required
           InputLabelProps={{

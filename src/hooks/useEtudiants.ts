@@ -13,6 +13,7 @@ export interface Etudiant {
 export interface EtudiantInput {
   pseudo: string
   walletAddress: string
+  role: 'etudiant' | 'formateur'
 }
 
 // Données de test pour le développement

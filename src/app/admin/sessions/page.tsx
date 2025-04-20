@@ -8,13 +8,16 @@ import { useSessions } from '@/hooks/useSessions'
 import { AppBar } from '@/components/layout/AppBar'
 import Link from 'next/link'
 import { PublicKey } from '@solana/web3.js'
+import { useConfirm } from '@/hooks/useConfirm'
+import { Session } from '@/types/formation'
 
 export default function SessionsPage() {
   const searchParams = useSearchParams()
-  const formationPubkey = searchParams.get('formationPubkey')
+  const formationPubkey = searchParams?.get('formationPubkey')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedSession, setSelectedSession] = useState<any>(null)
   const { sessions, isLoading, createSession, updateSession, deleteSession } = useSessions()
+  const { confirm } = useConfirm()
 
   const handleCreateSession = useCallback(async (data: any) => {
     if (!formationPubkey) return
@@ -46,10 +49,10 @@ export default function SessionsPage() {
   }, [selectedSession, updateSession])
 
   const handleDeleteSession = useCallback(async (pubkey: PublicKey) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette session ?')) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette session ?')) {
       await deleteSession.mutateAsync(pubkey)
     }
-  }, [deleteSession])
+  }, [deleteSession, confirm])
 
   const handleOpenModal = useCallback(() => {
     setIsModalOpen(true)
@@ -59,6 +62,23 @@ export default function SessionsPage() {
     setIsModalOpen(false)
     setSelectedSession(null)
   }, [])
+
+  const convertToSessionType = (session: any): Session => {
+    const startDate = new Date(session.startTime * 1000)
+    const endDate = new Date(session.endTime * 1000)
+    
+    return {
+      id: session.pubkey.toString(),
+      formationId: session.formationPubkey.toString(),
+      titre: Buffer.from(session.title).toString().replace(/\0/g, ''),
+      description: Buffer.from(session.description).toString().replace(/\0/g, ''),
+      date: startDate,
+      heureDebut: startDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      heureFin: endDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      presences: [],
+      pubkey: session.pubkey
+    }
+  }
 
   if (!formationPubkey) {
     return (
@@ -119,7 +139,7 @@ export default function SessionsPage() {
             {formationSessions.map((session) => (
               <SessionCard
                 key={session.pubkey.toString()}
-                session={session}
+                session={convertToSessionType(session)}
                 formationId={formationPubkey}
                 onEdit={() => {
                   setSelectedSession(session)

@@ -36,14 +36,14 @@ export default function SessionsPage({
     setShowModal(true)
   }
 
-  const handleSaveSession = (sessionData: Omit<Session, 'id' | 'presences'>) => {
+  const handleSaveSession = async (sessionData: Omit<Session, 'id' | 'presences'>) => {
     if (selectedSession) {
-      updateSession(formation.id, {
+      await updateSession(formation.id, {
         ...selectedSession,
         ...sessionData,
       })
     } else {
-      addSession(formation.id, {
+      await addSession(formation.id, {
         ...sessionData,
         id: crypto.randomUUID(),
         presences: [],
@@ -93,6 +93,7 @@ export default function SessionsPage({
           <SessionCard
             key={session.id}
             session={session}
+            formationId={formation.id}
             onEdit={() => handleEditSession(session)}
             onDelete={() => deleteSession(formation.id, session.id)}
           />
@@ -101,10 +102,12 @@ export default function SessionsPage({
 
       {showModal && (
         <SessionModal
-          session={selectedSession}
-          formationId={formation.id}
-          onSave={handleSaveSession}
+          isOpen={showModal}
           onClose={() => setShowModal(false)}
+          onSubmit={handleSaveSession}
+          initialData={selectedSession}
+          formationPubkey={formation.pubkey}
+          mode={selectedSession ? 'edit' : 'create'}
         />
       )}
     </div>

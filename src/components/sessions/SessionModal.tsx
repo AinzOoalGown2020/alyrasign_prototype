@@ -12,41 +12,46 @@ interface SessionFormData {
 }
 
 interface SessionModalProps {
-  session?: Session
-  formationId: string
-  onSave: (session: Omit<Session, 'id' | 'presences'>) => void
+  isOpen: boolean
   onClose: () => void
+  onSubmit: (data: any) => Promise<void>
+  initialData?: any
+  formationPubkey: PublicKey
+  mode: 'create' | 'edit'
 }
 
 export function SessionModal({
-  session,
-  formationId,
-  onSave,
+  isOpen,
   onClose,
+  onSubmit,
+  initialData,
+  formationPubkey,
+  mode
 }: SessionModalProps) {
-  const [titre, setTitre] = useState(session?.titre || '')
+  const [titre, setTitre] = useState(initialData?.titre || '')
   const [date, setDate] = useState(
-    session?.date ? session.date.toISOString().split('T')[0] : ''
+    initialData?.date ? initialData.date.toISOString().split('T')[0] : ''
   )
-  const [heureDebut, setHeureDebut] = useState(session?.heureDebut || '')
-  const [heureFin, setHeureFin] = useState(session?.heureFin || '')
+  const [heureDebut, setHeureDebut] = useState(initialData?.heureDebut || '')
+  const [heureFin, setHeureFin] = useState(initialData?.heureFin || '')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    onSave({
+    await onSubmit({
       titre,
-      formationId,
+      formationPubkey,
       date: new Date(date),
       heureDebut,
       heureFin,
     })
+    onClose()
   }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <h2 className="text-xl font-semibold mb-4">
-          {session ? 'Modifier la Session' : 'Créer une Session'}
+          {mode === 'edit' ? 'Modifier la Session' : 'Créer une Session'}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -114,7 +119,7 @@ export function SessionModal({
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
             >
-              {session ? 'Modifier' : 'Créer'}
+              {mode === 'edit' ? 'Modifier' : 'Créer'}
             </button>
           </div>
         </form>

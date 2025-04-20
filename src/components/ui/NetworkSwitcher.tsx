@@ -5,7 +5,7 @@ import { useConnection } from '@solana/wallet-adapter-react';
 import { Cluster } from '@solana/web3.js';
 
 const NetworkSwitcher: FC = () => {
-  const { connection, setConnection } = useConnection();
+  const { connection } = useConnection();
   const [isOpen, setIsOpen] = useState(false);
 
   const networks: { name: string; endpoint: string }[] = [
@@ -15,7 +15,8 @@ const NetworkSwitcher: FC = () => {
   ];
 
   const handleNetworkChange = (endpoint: string) => {
-    setConnection(endpoint as Cluster);
+    // TODO: Implémenter le changement de réseau d'une autre manière
+    console.log('Changement de réseau vers:', endpoint);
     setIsOpen(false);
   };
 

@@ -17,11 +17,12 @@ interface Session {
 
 interface FormationCardProps {
   formation: Formation
+  currentWallet?: string
   onEdit?: () => void
   onDelete?: () => void
 }
 
-export function FormationCard({ formation, onEdit, onDelete }: FormationCardProps) {
+export function FormationCard({ formation, currentWallet, onEdit, onDelete }: FormationCardProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const { syncFormation } = useFormationStore()

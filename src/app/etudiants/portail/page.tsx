@@ -4,13 +4,8 @@ import { useEffect, useState } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useBlockchain } from '@/hooks/useBlockchain'
 import { FormationCard } from '@/components/formations/FormationCard'
-
-interface Formation {
-  id: string
-  title: string
-  description: string
-  sessions: Session[]
-}
+import { PublicKey } from '@solana/web3.js'
+import { Formation } from '@/types/formation'
 
 interface Session {
   id: string
@@ -27,6 +22,23 @@ export default function PortailEtudiantPage() {
   const [etudiantFormations, setEtudiantFormations] = useState<Formation[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
+  const convertToFormationType = (formation: any): Formation => {
+    const startDate = new Date(formation.account.startDate.toNumber() * 1000)
+    const endDate = new Date(formation.account.endDate.toNumber() * 1000)
+    
+    return {
+      id: formation.publicKey.toString(),
+      titre: Buffer.from(formation.account.title).toString().replace(/\0/g, ''),
+      description: Buffer.from(formation.account.description).toString().replace(/\0/g, ''),
+      dateDebut: startDate,
+      dateFin: endDate,
+      formateurId: formation.account.authority.toString(),
+      sessions: [],
+      isSynced: true,
+      pubkey: formation.publicKey
+    }
+  }
+
   useEffect(() => {
     const checkAuthorization = async () => {
       if (!program || !publicKey) {
@@ -36,33 +48,27 @@ export default function PortailEtudiantPage() {
       }
 
       try {
-        // Vérifier si l'étudiant existe
-        const [studentPDA] = PublicKey.findProgramAddressSync(
-          [Buffer.from('student'), publicKey.toBuffer()],
-          program.programId
-        )
-
-        const studentAccount = await program.account.student.fetch(studentPDA)
-        setIsAuthorized(true)
-
-        // Récupérer les formations de l'étudiant
+        // Récupérer toutes les formations
         const formations = await program.account.formation.all()
-        const studentFormations = formations.filter(formation => 
-          formation.account.students.includes(publicKey)
-        )
+        
+        // Pour chaque formation, vérifier si l'étudiant est inscrit
+        for (const formation of formations) {
+          const [studentPDA] = PublicKey.findProgramAddressSync(
+            [Buffer.from('student'), formation.publicKey.toBuffer(), publicKey.toBuffer()],
+            program.programId
+          )
 
-        setEtudiantFormations(studentFormations.map(formation => ({
-          id: formation.publicKey.toString(),
-          title: formation.account.title,
-          description: formation.account.description,
-          sessions: formation.account.sessions.map(session => ({
-            id: session.publicKey.toString(),
-            title: session.title,
-            startAt: session.startAt.toNumber(),
-            endAt: session.endAt.toNumber(),
-            isActive: session.isActive
-          }))
-        })))
+          try {
+            const studentAccount = await program.account.student.fetch(studentPDA)
+            setIsAuthorized(true)
+            setEtudiantFormations([...etudiantFormations, convertToFormationType(formation)])
+          } catch (error) {
+            // L'étudiant n'est pas inscrit à cette formation
+            continue
+          }
+        }
+
+        setIsLoading(false)
       } catch (error) {
         console.error('Erreur lors de la vérification de l\'autorisation:', error)
         setIsAuthorized(false)

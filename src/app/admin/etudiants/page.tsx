@@ -5,12 +5,14 @@ import { EtudiantModal } from '@/components/etudiants/EtudiantModal'
 import { useEtudiants } from '@/hooks/useEtudiants'
 import { EtudiantInput } from '@/hooks/useEtudiants'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { useConfirm } from '@/hooks/useConfirm'
 
 export default function EtudiantsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const { etudiants, isLoading, createEtudiant, deleteEtudiant, error } = useEtudiants()
   const { connected, publicKey } = useWallet()
+  const { confirm } = useConfirm()
 
   const handleCreateEtudiant = async (data: EtudiantInput) => {
     if (!connected || !publicKey) {
@@ -39,7 +41,7 @@ export default function EtudiantsPage() {
   }
 
   const handleDeleteEtudiant = async (id: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
       await deleteEtudiant(id)
     }
   }

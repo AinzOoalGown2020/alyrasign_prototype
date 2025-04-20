@@ -9,6 +9,7 @@ export interface Formation {
   formateurId: string
   sessions: Session[]
   isSynced: boolean
+  pubkey: PublicKey
 }
 
 export interface Session {

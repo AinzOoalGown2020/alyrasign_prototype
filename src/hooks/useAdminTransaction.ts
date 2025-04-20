@@ -153,6 +153,12 @@ export const useAdminTransaction = () => {
         program.programId
       );
 
+      // Calculer le PDA de la formation
+      const [formationPDA] = await PublicKey.findProgramAddress(
+        [Buffer.from('formation'), Buffer.from(formationId)],
+        program.programId
+      );
+
       // Créer la transaction
       const transaction = new Transaction();
       

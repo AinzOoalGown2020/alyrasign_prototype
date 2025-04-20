@@ -9,7 +9,7 @@ import { Program } from '@coral-xyz/anchor'
 const DEFAULT_PROGRAM_ID = 'v69C2KjiWjhUcRTKuotEY1E1PykP4oUtFaBE8ZCg5yJ'
 
 export const PDAManager = () => {
-  const { program, provider, initializeStorage } = useBlockchain();
+  const { program, initializeStorage } = useBlockchain();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -31,7 +31,7 @@ export const PDAManager = () => {
   }, []);
 
   const handleInitializeStorage = async () => {
-    if (!program || !provider) {
+    if (!program) {
       setError('Programme non initialisé');
       return;
     }
@@ -88,9 +88,6 @@ export const PDAManager = () => {
           <strong>Programme initialisé:</strong> {program ? 'Oui' : 'Non'}
         </Typography>
         <Typography variant="body2">
-          <strong>Provider initialisé:</strong> {provider ? 'Oui' : 'Non'}
-        </Typography>
-        <Typography variant="body2">
           <strong>Program ID:</strong> {DEFAULT_PROGRAM_ID}
         </Typography>
       </Box>
@@ -100,7 +97,7 @@ export const PDAManager = () => {
           variant="contained"
           color="primary"
           onClick={handleInitializeStorage}
-          disabled={isLoading || !program || !provider}
+          disabled={isLoading || !program}
         >
           {isLoading ? <CircularProgress size={24} /> : 'Initialiser le Storage'}
         </Button>

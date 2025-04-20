@@ -6,12 +6,14 @@ interface EtudiantModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (data: EtudiantInput) => void
+  mode: 'create' | 'edit'
 }
 
-export function EtudiantModal({ isOpen, onClose, onSubmit }: EtudiantModalProps) {
+export function EtudiantModal({ isOpen, onClose, onSubmit, mode }: EtudiantModalProps) {
   const [formData, setFormData] = useState<EtudiantInput>({
     pseudo: '',
-    walletAddress: ''
+    walletAddress: '',
+    role: 'etudiant'
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -30,7 +32,7 @@ export function EtudiantModal({ isOpen, onClose, onSubmit }: EtudiantModalProps)
 
         <div className="relative bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
           <Dialog.Title className="text-xl font-bold text-white mb-4">
-            Ajouter un Étudiant
+            {mode === 'create' ? 'Ajouter un Étudiant' : 'Modifier un Étudiant'}
           </Dialog.Title>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -74,7 +76,7 @@ export function EtudiantModal({ isOpen, onClose, onSubmit }: EtudiantModalProps)
                 type="submit"
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
               >
-                Ajouter
+                {mode === 'create' ? 'Ajouter' : 'Modifier'}
               </button>
             </div>
           </form>

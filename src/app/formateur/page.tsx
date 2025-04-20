@@ -14,7 +14,7 @@ export default function FormateurPage() {
   const [selectedFormation, setSelectedFormation] = useState<Formation | undefined>()
   const [isSyncing, setIsSyncing] = useState(false)
   
-  const { formations, addFormation, updateFormation, deleteFormation, syncAllFormations } = useFormationStore()
+  const { formations, addFormation, updateLocalFormation, deleteLocalFormation, syncAllFormations } = useFormationStore()
 
   if (!wallet) {
     redirect('/')
@@ -32,7 +32,7 @@ export default function FormateurPage() {
 
   const handleSaveFormation = (formationData: Omit<Formation, 'id' | 'sessions'>) => {
     if (selectedFormation) {
-      updateFormation({
+      updateLocalFormation({
         ...selectedFormation,
         ...formationData,
       })
@@ -90,8 +90,7 @@ export default function FormateurPage() {
             key={formation.id}
             formation={formation}
             onEdit={() => handleEditFormation(formation)}
-            onDelete={() => deleteFormation(formation.id)}
-            onManageSessions={() => {/* TODO: Implémenter la gestion des sessions */}}
+            onDelete={() => deleteLocalFormation(formation.id)}
           />
         ))}
       </div>

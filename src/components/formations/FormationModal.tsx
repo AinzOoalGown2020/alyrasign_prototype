@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Formation } from '@/types/formation'
+import { PublicKey } from '@solana/web3.js'
 
 interface FormationModalProps {
   formation?: Formation
@@ -25,6 +26,8 @@ export function FormationModal({ formation, onSave, onClose }: FormationModalPro
       dateDebut: new Date(dateDebut),
       dateFin: new Date(dateFin),
       formateurId: formation?.formateurId || '',
+      pubkey: formation?.pubkey || new PublicKey('11111111111111111111111111111111'),
+      isSynced: formation?.isSynced || false
     })
   }
 

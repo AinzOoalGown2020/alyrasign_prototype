@@ -33,8 +33,8 @@ export function EtudiantCard({ etudiant, onEdit, onDelete }: EtudiantCardProps) 
 
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <span className="font-medium">Rôle :</span>
-          <p className="capitalize">{etudiant.role}</p>
+          <span className="font-medium">Pseudo :</span>
+          <p className="capitalize">{etudiant.pseudo}</p>
         </div>
         <div>
           <span className="font-medium">Statut :</span>

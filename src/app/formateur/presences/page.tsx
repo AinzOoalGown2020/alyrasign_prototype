@@ -5,6 +5,7 @@ import { useWallet } from '@/hooks/useWallet'
 import { redirect } from 'next/navigation'
 import { useFormationStore } from '@/stores/formationStore'
 import { PresenceManager } from '@/components/presences/PresenceManager'
+import { Presence } from '@/types/formation'
 import Link from 'next/link'
 
 export default function PresencesPage({

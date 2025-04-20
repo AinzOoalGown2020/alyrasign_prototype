@@ -4,11 +4,12 @@ import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { useMemo, useState, useEffect } from 'react'
 import BN from 'bn.js'
 
-// ID du programme déployé sur la blockchain
-const PROGRAM_ID = process.env.NEXT_PUBLIC_ALYRA_SIGN_PROGRAM_ID || 'v69C2KjiWjhUcRTKuotEY1E1PykP4oUtFaBE8ZCg5yJ'
-
 // Import de l'IDL
 const idl = require('../idl/alyra_sign.json')
+type AlyraSignProgram = Program<typeof idl>
+
+// ID du programme déployé sur la blockchain
+const PROGRAM_ID = process.env.NEXT_PUBLIC_ALYRA_SIGN_PROGRAM_ID || 'v69C2KjiWjhUcRTKuotEY1E1PykP4oUtFaBE8ZCg5yJ'
 
 // Constantes pour les soldes minimums
 const MIN_ADMIN_BALANCE = 0.1 // 0.1 SOL minimum pour l'admin
@@ -17,7 +18,7 @@ const MIN_STUDENT_BALANCE = 0.05 // 0.05 SOL minimum pour l'étudiant
 export function useBlockchain() {
   const { connection } = useConnection()
   const wallet = useWallet()
-  const [program, setProgram] = useState<Program | null>(null)
+  const [program, setProgram] = useState<AlyraSignProgram | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Fonction pour vérifier les soldes

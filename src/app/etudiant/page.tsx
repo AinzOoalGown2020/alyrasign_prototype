@@ -1,3 +1,5 @@
+'use client'
+
 import { useWallet } from '@/hooks/useWallet'
 import { redirect } from 'next/navigation'
 

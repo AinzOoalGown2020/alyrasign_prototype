@@ -32,7 +32,7 @@ export function useSessions() {
     queryFn: async () => {
       if (!program) return []
       
-      const sessions = await program.account.session.all()
+      const sessions = await (program as any).account.session.all()
       return sessions.map(session => ({
         pubkey: session.publicKey,
         id: session.account.id,
@@ -50,7 +50,7 @@ export function useSessions() {
   const createSession = useMutation({
     mutationFn: async (input: SessionInput) => {
       if (!program) throw new Error('Program not initialized')
-      await program.methods.createSession(
+      await (program as any).methods.createSession(
         input.id,
         input.title,
         input.description,
@@ -69,7 +69,7 @@ export function useSessions() {
   const updateSession = useMutation({
     mutationFn: async ({ pubkey, input }: { pubkey: PublicKey, input: Omit<SessionInput, 'formationPubkey'> }) => {
       if (!program) throw new Error('Program not initialized')
-      await program.methods.updateSession(
+      await (program as any).methods.updateSession(
         input.title,
         input.description,
         input.startTime,
@@ -87,7 +87,7 @@ export function useSessions() {
   const deleteSession = useMutation({
     mutationFn: async (pubkey: PublicKey) => {
       if (!program) throw new Error('Program not initialized')
-      await program.methods.deleteSession()
+      await (program as any).methods.deleteSession()
         .accounts({
           session: pubkey,
         })

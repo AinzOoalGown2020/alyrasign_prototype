@@ -49,7 +49,7 @@ export function useEtudiants() {
       }
 
       try {
-        const registeredStudents = await program.account.student.all()
+        const registeredStudents = await (program as any).account.student.all()
         setEtudiants(registeredStudents.map((student: any) => ({
           id: student.publicKey.toString(),
           walletAddress: student.account.wallet.toString(),
@@ -78,7 +78,7 @@ export function useEtudiants() {
       const studentPDA = await createStudent(data.pseudo, data.walletAddress)
 
       // Rafraîchir la liste des étudiants
-      const registeredStudents = await program.account.student.all()
+      const registeredStudents = await (program as any).account.student.all()
       setEtudiants(registeredStudents.map((student: any) => ({
         id: student.publicKey.toString(),
         walletAddress: student.account.wallet.toString(),

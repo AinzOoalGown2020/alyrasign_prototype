@@ -35,7 +35,7 @@ export function useFormations() {
       }
 
       try {
-        const formations = await program.account.formation.all()
+        const formations = await (program as any).account.formation.all()
         setFormations(formations.map(formation => ({
           pubkey: formation.publicKey,
           id: formation.account.id,
@@ -65,7 +65,7 @@ export function useFormations() {
       const titleBytes = Buffer.from(input.title.padEnd(32, '\0'))
       const descriptionBytes = Buffer.from(input.description.padEnd(64, '\0'))
 
-      await program.methods
+      await (program as any).methods
         .createFormation(
           Array.from(titleBytes),
           Array.from(descriptionBytes),
@@ -80,7 +80,7 @@ export function useFormations() {
         .rpc()
 
       // Rafraîchir la liste des formations
-      const formations = await program.account.formation.all()
+      const formations = await (program as any).account.formation.all()
       setFormations(formations.map(formation => ({
         pubkey: formation.publicKey,
         id: formation.account.id,
@@ -106,7 +106,7 @@ export function useFormations() {
       const titleBytes = Buffer.from(input.title.padEnd(32, '\0'))
       const descriptionBytes = Buffer.from(input.description.padEnd(64, '\0'))
 
-      await program.methods
+      await (program as any).methods
         .updateFormation(
           Array.from(titleBytes),
           Array.from(descriptionBytes),
@@ -119,7 +119,7 @@ export function useFormations() {
         .rpc()
 
       // Rafraîchir la liste des formations
-      const formations = await program.account.formation.all()
+      const formations = await (program as any).account.formation.all()
       setFormations(formations.map(formation => ({
         pubkey: formation.publicKey,
         id: formation.account.id,
@@ -137,14 +137,14 @@ export function useFormations() {
   const deleteFormation = async (pubkey: PublicKey) => {
     if (!program) throw new Error('Program not initialized')
     try {
-      await program.methods.deleteFormation()
+      await (program as any).methods.deleteFormation()
         .accounts({
           formation: pubkey,
         })
         .rpc()
 
       // Rafraîchir la liste des formations
-      const formations = await program.account.formation.all()
+      const formations = await (program as any).account.formation.all()
       setFormations(formations.map(formation => ({
         pubkey: formation.publicKey,
         id: formation.account.id,

@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import { Program, AnchorProvider } from "@coral-xyz/anchor";
 import { AlyraSign } from "../target/types/alyra_sign";
 import { PublicKey, SystemProgram, Keypair } from "@solana/web3.js";
 import { expect } from "chai";
@@ -8,7 +8,11 @@ describe("alyra_sign", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.AlyraSign as Program<AlyraSign>;
+  const program = new Program<AlyraSign>(
+    require("../target/idl/alyra_sign.json"),
+    new PublicKey("v69C2KjiWjhUcRTKuotEY1E1PykP4oUtFaBE8ZCg5yJ"),
+    provider
+  );
   
   const authority = provider.wallet;
   const student = Keypair.generate();

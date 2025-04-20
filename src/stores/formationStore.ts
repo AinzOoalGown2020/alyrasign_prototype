@@ -96,7 +96,7 @@ export const useFormationStore = create<FormationStore>((set, get) => ({
       const descriptionBytes = Buffer.from(formation.description.padEnd(64, '\0'))
 
       // Créer la formation sur la blockchain
-      await program.methods
+      await (program as any).methods
         .createFormation(
           Array.from(titleBytes),
           Array.from(descriptionBytes),

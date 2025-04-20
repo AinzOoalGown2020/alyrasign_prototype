@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SessionCard } from '@/components/sessions/SessionCard'
 import { SessionModal } from '@/components/sessions/SessionModal'
@@ -11,7 +11,7 @@ import { PublicKey } from '@solana/web3.js'
 import { useConfirm } from '@/hooks/useConfirm'
 import { Session } from '@/types/formation'
 
-export default function SessionsPage() {
+function SessionsContent() {
   const searchParams = useSearchParams()
   const formationPubkey = searchParams?.get('formationPubkey')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -161,5 +161,13 @@ export default function SessionsPage() {
         mode={selectedSession ? 'edit' : 'create'}
       />
     </div>
+  )
+}
+
+export default function SessionsPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <SessionsContent />
+    </Suspense>
   )
 } 

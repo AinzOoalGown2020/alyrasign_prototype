@@ -102,7 +102,7 @@ export const useAdminTransaction = () => {
       // Note: Cette partie dépend de votre programme spécifique
       // Vous devrez adapter cette partie en fonction de votre IDL
       transaction.add(
-        await program.methods
+        await (program as any).methods
           .createFormation(formationData)
           .accounts({
             formation: formationPDA,
@@ -166,11 +166,11 @@ export const useAdminTransaction = () => {
       // Note: Cette partie dépend de votre programme spécifique
       // Vous devrez adapter cette partie en fonction de votre IDL
       transaction.add(
-        await program.methods
+        await (program as any).methods
           .createSession(sessionData)
           .accounts({
             session: sessionPDA,
-            formation: formationPDA, // Vous devrez calculer ce PDA
+            formation: formationPDA,
             authority: publicKey,
             systemProgram: SystemProgram.programId,
           })

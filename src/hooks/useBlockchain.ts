@@ -1,6 +1,6 @@
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
 import { Program, AnchorProvider, web3, utils } from '@coral-xyz/anchor'
-import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js'
+import { PublicKey, LAMPORTS_PER_SOL, SystemProgram } from '@solana/web3.js'
 import { useMemo, useState, useEffect } from 'react'
 import BN from 'bn.js'
 
@@ -59,7 +59,7 @@ export function useBlockchain() {
         }, null, 2))
 
         // Création du provider avec une configuration plus robuste
-        const provider = new AnchorProvider(
+        const provider = new (AnchorProvider as any)(
           connection,
           wallet as any,
           { 
@@ -68,72 +68,15 @@ export function useBlockchain() {
           }
         )
 
-        // Définir le provider comme provider par défaut
-        AnchorProvider.env = provider
+        // Création du programme
+        const program = new (Program as any)(
+          idl,
+          PROGRAM_ID,
+          provider
+        )
 
-        console.log('useBlockchain - Provider créé avec succès:', JSON.stringify({
-          providerPublicKey: provider.publicKey?.toBase58(),
-          connection: provider.connection.rpcEndpoint,
-          opts: provider.opts
-        }, null, 2))
-
-        // Vérification que l'IDL est bien chargé
-        if (!idl) {
-          throw new Error('IDL non chargé')
-        }
-
-        console.log('useBlockchain - IDL chargé:', JSON.stringify({
-          version: idl.version,
-          name: idl.name,
-          instructions: idl.instructions?.length,
-          accounts: idl.accounts?.length
-        }, null, 2))
-
-        try {
-          console.log('useBlockchain - Tentative de création du ProgramID avec:', PROGRAM_ID)
-          
-          // Création du programId avec vérification
-          const programId = new PublicKey(PROGRAM_ID)
-          if (!programId) {
-            throw new Error('ProgramId invalide')
-          }
-
-          // Vérification que le programId est valide
-          if (!PublicKey.isOnCurve(programId)) {
-            throw new Error('ProgramId n\'est pas sur la courbe')
-          }
-
-          console.log('useBlockchain - ProgramID créé:', JSON.stringify({
-            programId: programId.toString(),
-            toBase58: programId.toBase58(),
-            toBytes: Array.from(programId.toBytes())
-          }, null, 2))
-
-          // Création du programme avec une configuration plus robuste
-          const newProgram = new Program(
-            idl,
-            programId,
-            provider
-          )
-
-          console.log('useBlockchain - Programme créé avec succès:', JSON.stringify({
-            programId: newProgram.programId.toString(),
-            provider: newProgram.provider.publicKey?.toBase58()
-          }, null, 2))
-          
-          setProgram(newProgram)
-          setError(null)
-        } catch (programError) {
-          console.error('useBlockchain - Erreur détaillée lors de la création du programme:', JSON.stringify({
-            name: programError.name,
-            message: programError.message,
-            stack: programError.stack,
-            cause: programError.cause,
-            code: programError.code
-          }, null, 2))
-          throw programError
-        }
-
+        setProgram(program)
+        setError(null)
       } catch (err) {
         console.error('useBlockchain - Erreur lors de l\'initialisation:', JSON.stringify({
           name: err.name,
@@ -180,7 +123,7 @@ export function useBlockchain() {
     console.log('useBlockchain - PDA Formation:', formationPDA.toString())
 
     try {
-      const tx = await program.methods
+      const tx = await (program as any).methods
         .createFormation(
           Array.from(titleBytes),
           Array.from(descriptionBytes),
@@ -190,7 +133,7 @@ export function useBlockchain() {
         .accounts({
           formation: formationPDA,
           authority: wallet.publicKey,
-          systemProgram: web3.SystemProgram.programId,
+          systemProgram: SystemProgram.programId,
         })
         .rpc()
       console.log('useBlockchain - Formation créée avec succès:', tx)
@@ -210,13 +153,13 @@ export function useBlockchain() {
       new PublicKey(PROGRAM_ID)
     )
 
-    await program.methods
+    await (program as any).methods
       .createSession(sessionId, title, startAt, endAt)
       .accounts({
         session: sessionPDA,
         formation: formationPubkey,
         authority: wallet.publicKey,
-        systemProgram: web3.SystemProgram.programId,
+        systemProgram: SystemProgram.programId,
       })
       .rpc()
   }
@@ -245,17 +188,17 @@ export function useBlockchain() {
     console.log('useBlockchain - PDA Event:', eventPDA.toString())
 
     try {
-      const tx = await program.methods
+      const tx = await (program as any).methods
         .createEvent(title, description, eventCode, startDate, endDate)
         .accounts({
           event: eventPDA,
           authority: wallet.publicKey,
-          systemProgram: web3.SystemProgram.programId,
+          systemProgram: SystemProgram.programId,
         })
         .rpc()
       
       console.log('useBlockchain - Événement créé avec succès:', tx)
-      return tx
+      return { tx, eventPDA }
     } catch (error) {
       console.error('useBlockchain - Erreur lors de la création de l\'événement:', error)
       throw error
@@ -279,34 +222,33 @@ export function useBlockchain() {
 
     // Vérifier si l'événement existe
     try {
-      const eventAccount = await program.account.event.fetch(eventPubkey)
+      const eventAccount = await (program as any).account.event.fetch(eventPubkey)
       console.log('useBlockchain - Événement trouvé:', eventAccount)
     } catch (error) {
       console.error('useBlockchain - Erreur: événement non trouvé')
-      throw new Error('Event not found')
+      throw new Error('Événement non trouvé')
     }
 
     const [attendeePDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('attendee'), eventPubkey.toBuffer()],
+      [Buffer.from('attendee'), eventPubkey.toBuffer(), wallet.publicKey.toBuffer()],
       new PublicKey(PROGRAM_ID)
     )
 
     console.log('useBlockchain - PDA Attendee:', attendeePDA.toString())
 
     try {
-      const tx = await program.methods
+      const tx = await (program as any).methods
         .registerAttendee(firstName, lastName, email)
         .accounts({
           attendee: attendeePDA,
           event: eventPubkey,
-          attendeeWallet: wallet.publicKey,
-          signer: wallet.publicKey,
-          systemProgram: web3.SystemProgram.programId,
+          authority: wallet.publicKey,
+          systemProgram: SystemProgram.programId,
         })
         .rpc()
       
       console.log('useBlockchain - Étudiant enregistré avec succès:', tx)
-      return tx
+      return { tx, attendeePDA }
     } catch (error) {
       console.error('useBlockchain - Erreur lors de l\'enregistrement de l\'étudiant:', error)
       throw error
@@ -315,28 +257,37 @@ export function useBlockchain() {
 
   // Marquer une présence
   const markPresence = async (sessionPubkey: PublicKey, formationPubkey: PublicKey) => {
-    if (!program || !wallet.publicKey) throw new Error('Program not initialized')
+    if (!program || !wallet.publicKey) {
+      throw new Error('Program or wallet not initialized')
+    }
 
-    const [studentPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('student'), formationPubkey.toBuffer(), wallet.publicKey.toBuffer()],
-      new PublicKey(PROGRAM_ID)
-    )
+    try {
+      const [studentPDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from('student'), formationPubkey.toBuffer(), wallet.publicKey.toBuffer()],
+        new PublicKey(PROGRAM_ID)
+      )
 
-    const [presencePDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('presence'), sessionPubkey.toBuffer(), wallet.publicKey.toBuffer()],
-      new PublicKey(PROGRAM_ID)
-    )
+      const [presencePDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from('presence'), sessionPubkey.toBuffer(), studentPDA.toBuffer()],
+        new PublicKey(PROGRAM_ID)
+      )
 
-    await program.methods
-      .markPresence()
-      .accounts({
-        presence: presencePDA,
-        session: sessionPubkey,
-        student: studentPDA,
-        studentWallet: wallet.publicKey,
-        systemProgram: web3.SystemProgram.programId,
-      })
-      .rpc()
+      const tx = await (program as any).methods
+        .markPresence()
+        .accounts({
+          presence: presencePDA,
+          session: sessionPubkey,
+          student: studentPDA,
+          authority: wallet.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc()
+
+      return { tx, presencePDA }
+    } catch (error) {
+      console.error('Error marking presence:', error)
+      throw error
+    }
   }
 
   // Initialisation du Storage
@@ -354,16 +305,16 @@ export function useBlockchain() {
     console.log('useBlockchain - PDA Storage:', storagePDA.toString())
 
     try {
-      const tx = await program.methods
+      const tx = await (program as any).methods
         .initializeStorage()
         .accounts({
           storage: storagePDA,
           authority: wallet.publicKey,
-          systemProgram: web3.SystemProgram.programId,
+          systemProgram: SystemProgram.programId,
         })
         .rpc()
       console.log('useBlockchain - Storage initialisé avec succès:', tx)
-      return tx
+      return { tx, storagePDA }
     } catch (error) {
       console.error('useBlockchain - Erreur lors de l\'initialisation du storage:', error)
       throw error
@@ -372,74 +323,23 @@ export function useBlockchain() {
 
   // Création d'un étudiant
   const createStudent = async (pseudo: string, walletAddress: string) => {
-    if (!program) {
-      console.error('useBlockchain - Erreur: Program non initialisé pour createStudent')
-      throw new Error('Program not initialized')
+    if (!program || !wallet.publicKey) {
+      throw new Error('Program or wallet not initialized')
     }
 
     try {
-      // 1. Vérification de l'adresse wallet de l'étudiant
-      const studentPubkey = new PublicKey(walletAddress)
-      console.log('useBlockchain - Adresse wallet étudiant:', studentPubkey.toString())
-      
-      // 2. Vérification des soldes
-      await checkBalances(studentPubkey)
-
-      // 3. Génération et vérification du PDA
+      const studentWallet = new PublicKey(walletAddress)
       const [studentPDA] = PublicKey.findProgramAddressSync(
-        [Buffer.from('student'), studentPubkey.toBuffer()],
-        program.programId
+        [Buffer.from('student'), wallet.publicKey.toBuffer(), studentWallet.toBuffer()],
+        new PublicKey(PROGRAM_ID)
       )
-      console.log('useBlockchain - PDA généré:', studentPDA.toString())
 
-      // 4. Vérification détaillée si le PDA existe déjà
-      try {
-        const studentAccount = await program.account.student.fetch(studentPDA)
-        if (studentAccount) {
-          console.error('useBlockchain - PDA existe déjà:', {
-            pda: studentPDA.toString(),
-            student: studentAccount
-          })
-          throw new Error('Un étudiant avec cette adresse wallet existe déjà')
-        }
-      } catch (err) {
-        if (!err.message.includes('Account does not exist')) {
-          console.error('useBlockchain - Erreur lors de la vérification du PDA:', err)
-          throw err
-        }
-      }
-
-      // 5. Vérification des comptes impliqués
-      const adminPubkey = program.provider.publicKey
-      console.log('useBlockchain - Comptes impliqués:', {
-        admin: adminPubkey.toString(),
-        student: studentPubkey.toString(),
-        pda: studentPDA.toString(),
-        program: program.programId.toString()
-      })
-
-      // 6. Vérification du solde admin pour la création du PDA
-      const adminBalance = await connection.getBalance(adminPubkey)
-      const estimatedCost = 0.00203928 * LAMPORTS_PER_SOL // Coût estimé pour la création du PDA
-      
-      if (adminBalance < estimatedCost) {
-        console.error('useBlockchain - Solde admin insuffisant pour créer le PDA:', {
-          balance: adminBalance / LAMPORTS_PER_SOL,
-          required: estimatedCost / LAMPORTS_PER_SOL
-        })
-        throw new Error(`Solde administrateur insuffisant pour créer le PDA. Minimum requis: ${estimatedCost / LAMPORTS_PER_SOL} SOL`)
-      }
-
-      console.log('useBlockchain - Création du compte étudiant...')
-
-      // 7. Création du compte étudiant
-      const tx = await program.methods
+      const tx = await (program as any).methods
         .createStudent(pseudo)
         .accounts({
           student: studentPDA,
-          wallet: studentPubkey,
-          authority: adminPubkey,
-          systemProgram: program.programId,
+          authority: wallet.publicKey,
+          systemProgram: SystemProgram.programId,
         })
         .rpc()
 
@@ -447,16 +347,16 @@ export function useBlockchain() {
       console.log('useBlockchain - Compte étudiant créé avec succès')
 
       // 8. Vérification finale du PDA créé
-      const createdAccount = await program.account.student.fetch(studentPDA)
+      const createdAccount = await (program as any).account.student.fetch(studentPDA)
       console.log('useBlockchain - Vérification du PDA créé:', {
         pda: studentPDA.toString(),
         account: createdAccount
       })
 
-      return studentPDA
-    } catch (err) {
-      console.error('useBlockchain - Erreur lors de la création de l\'étudiant:', err)
-      throw err
+      return { tx, studentPDA }
+    } catch (error) {
+      console.error('Error creating student:', error)
+      throw error
     }
   }
 

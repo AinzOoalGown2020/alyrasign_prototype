@@ -49,7 +49,7 @@ export default function PortailEtudiantPage() {
 
       try {
         // Récupérer toutes les formations
-        const formations = await program.account.formation.all()
+        const formations = await (program.account as any).formation.all()
         
         // Pour chaque formation, vérifier si l'étudiant est inscrit
         for (const formation of formations) {
@@ -59,7 +59,7 @@ export default function PortailEtudiantPage() {
           )
 
           try {
-            const studentAccount = await program.account.student.fetch(studentPDA)
+            const studentAccount = await (program.account as any).student.fetch(studentPDA)
             setIsAuthorized(true)
             setEtudiantFormations([...etudiantFormations, convertToFormationType(formation)])
           } catch (error) {

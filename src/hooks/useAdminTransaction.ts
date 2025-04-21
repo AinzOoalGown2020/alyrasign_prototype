@@ -7,7 +7,7 @@ import { useBlockchain } from './useBlockchain';
 const ADMIN_ADDRESSES = [
   process.env.NEXT_PUBLIC_ADMIN_WALLET || "79ziyYSUHVNENrJVinuotWZQ2TX7n44vSeo1cgxFPzSy",
   process.env.NEXT_PUBLIC_ADMIN_WALLET_1 || "HYogRLGSbAxY1dYkAvBsNdc3QMowLL9ZnJ1qhW5Ew7hG",
-  process.env.NEXT_PUBLIC_ADMIN_WALLET_2 || "E6AdR4Q6H6N7mnXeJJ5bUG8oMfPu9e9PNM1emMsw376g"
+  process.env.NEXT_PUBLIC_ADMIN_WALLET_2 || "HwkDskvuMJbaMwEKTJaZBKWmMxjxpNGhUU7mQECiRzyH"
 ];
 
 export const useAdminTransaction = () => {

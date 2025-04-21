@@ -233,5 +233,9 @@ rustc : 1.72.0
 cargo : 1.72.0
 ```
 
+## WEB DEBUG - Simulateur mobile
 
+Simulateur de smartphone et tablette sur ordinateur très réaliste avec plusieurs modèles disponibles pour tester son site mobile.
+
+https://www.webmobilefirst.com/
 

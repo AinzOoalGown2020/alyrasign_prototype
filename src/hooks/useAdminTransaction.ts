@@ -3,8 +3,12 @@ import { Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana
 import { useState, useCallback } from 'react';
 import { useBlockchain } from './useBlockchain';
 
-// Adresse du développeur avec accès complet
-const DEV_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET || "79ziyYSUHVNENrJVinuotWZQ2TX7n44vSeo1cgxFPzSy";
+// Adresses des administrateurs avec accès complet
+const ADMIN_ADDRESSES = [
+  process.env.NEXT_PUBLIC_ADMIN_WALLET || "79ziyYSUHVNENrJVinuotWZQ2TX7n44vSeo1cgxFPzSy",
+  process.env.NEXT_PUBLIC_ADMIN_WALLET_1 || "HYogRLGSbAxY1dYkAvBsNdc3QMowLL9ZnJ1qhW5Ew7hG",
+  process.env.NEXT_PUBLIC_ADMIN_WALLET_2 || "E6AdR4Q6H6N7mnXeJJ5bUG8oMfPu9e9PNM1emMsw376g"
+];
 
 export const useAdminTransaction = () => {
   const { wallet, publicKey } = useWallet();
@@ -14,7 +18,7 @@ export const useAdminTransaction = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Vérifier si l'utilisateur est admin
-  const isAdmin = publicKey?.toString() === DEV_ADDRESS;
+  const isAdmin = publicKey ? ADMIN_ADDRESSES.includes(publicKey.toString()) : false;
 
   // Fonction pour calculer le rent minimum pour un PDA
   const calculateRentExemption = useCallback(async (dataSize: number) => {

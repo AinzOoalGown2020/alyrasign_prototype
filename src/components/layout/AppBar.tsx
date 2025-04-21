@@ -16,8 +16,12 @@ const WalletMultiButtonDynamic = dynamic(
   { ssr: false }
 );
 
-// Adresse du développeur avec accès complet
-const DEV_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET || "79ziyYSUHVNENrJVinuotWZQ2TX7n44vSeo1cgxFPzSy";
+// Adresses des administrateurs avec accès complet
+const ADMIN_ADDRESSES = [
+  process.env.NEXT_PUBLIC_ADMIN_WALLET || "79ziyYSUHVNENrJVinuotWZQ2TX7n44vSeo1cgxFPzSy",
+  process.env.NEXT_PUBLIC_ADMIN_WALLET_1 || "HYogRLGSbAxY1dYkAvBsNdc3QMowLL9ZnJ1qhW5Ew7hG",
+  process.env.NEXT_PUBLIC_ADMIN_WALLET_2 || "E6AdR4Q6H6N7mnXeJJ5bUG8oMfPu9e9PNM1emMsw376g"
+];
 
 // Définir des types pour les rôles
 type UserRole = 'formateur' | 'etudiant' | null;
@@ -69,11 +73,11 @@ export const AppBar: React.FC = () => {
       if (walletConnected && wallet.publicKey) {
         const address = wallet.publicKey.toString();
         
-        // Vérifier si c'est l'adresse admin
-        if (address === DEV_ADDRESS) {
+        // Vérifier si c'est une adresse admin
+        if (ADMIN_ADDRESSES.includes(address)) {
           console.log('Adresse admin détectée dans AppBar:', {
             address,
-            DEV_ADDRESS
+            ADMIN_ADDRESSES
           });
           setUserRole('formateur');
           return;
@@ -107,9 +111,9 @@ export const AppBar: React.FC = () => {
       {/* NavBar / Header */}
       <div className="navbar flex h-20 flex-row md:mb-2 shadow-lg w-full">
         <div className="navbar-start flex-1 flex items-center">
-          <div className="hidden sm:inline w-22 h-22 md:p-2 ml-16 flex items-center space-x-4">
-            <div className="flex items-center space-x-4">
-              <div className="flex-shrink-0 w-[70px] h-[70px] relative flex items-center">
+          <div className="flex w-22 h-22 md:p-2 ml-4 md:ml-16 items-center space-x-2 md:space-x-4">
+            <div className="flex items-center space-x-2 md:space-x-4">
+              <div className="flex-shrink-0 w-[50px] h-[50px] md:w-[70px] md:h-[70px] relative flex items-center">
                 <Image 
                   src="/AlyraSign.png" 
                   alt="AlyraSign Logo" 
@@ -120,7 +124,7 @@ export const AppBar: React.FC = () => {
                   priority
                 />
               </div>
-              <Link href="/" className="text-purple-400 hover:text-white text-2xl font-bold transition-colors duration-200">
+              <Link href="/" className="text-purple-400 hover:text-white text-xl md:text-2xl font-bold transition-colors duration-200">
                 AlyraSign
               </Link>
             </div>

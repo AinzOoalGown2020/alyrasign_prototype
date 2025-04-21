@@ -7,7 +7,13 @@ import { PublicKey, LAMPORTS_PER_SOL, SystemProgram, Transaction, TransactionIns
 import { Box, Typography, Paper, Grid, Button, CircularProgress, Alert } from '@mui/material';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
-const DEV_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET || "79ziyYSUHVNENrJVinuotWZQ2TX7n44vSeo1cgxFPzSy";
+// Adresses des administrateurs avec accès complet
+const ADMIN_ADDRESSES = [
+  process.env.NEXT_PUBLIC_ADMIN_WALLET || "79ziyYSUHVNENrJVinuotWZQ2TX7n44vSeo1cgxFPzSy",
+  process.env.NEXT_PUBLIC_ADMIN_WALLET_1 || "HYogRLGSbAxY1dYkAvBsNdc3QMowLL9ZnJ1qhW5Ew7hG",
+  process.env.NEXT_PUBLIC_ADMIN_WALLET_2 || "E6AdR4Q6H6N7mnXeJJ5bUG8oMfPu9e9PNM1emMsw376g"
+];
+
 const PROGRAM_ID = process.env.NEXT_PUBLIC_ALYRA_SIGN_PROGRAM_ID || 'v69C2KjiWjhUcRTKuotEY1E1PykP4oUtFaBE8ZCg5yJ';
 const MIN_SOL_REQUIRED = 5;
 
@@ -50,7 +56,7 @@ export default function AdminPage() {
   useEffect(() => {
     const checkAuthorization = () => {
       const currentWalletAddress = publicKey?.toString();
-      const isAdmin = currentWalletAddress === DEV_ADDRESS;
+      const isAdmin = currentWalletAddress ? ADMIN_ADDRESSES.includes(currentWalletAddress) : false;
       setIsAuthorized(isAdmin);
       
       if (!isAdmin && currentWalletAddress) {
@@ -83,7 +89,7 @@ export default function AdminPage() {
       });
 
       // Vérification de la balance du wallet administrateur
-      const adminPubkey = new PublicKey(DEV_ADDRESS);
+      const adminPubkey = new PublicKey(ADMIN_ADDRESSES[0]);
       const adminBalance = await connection.getBalance(adminPubkey);
       setAdminBalance(adminBalance / LAMPORTS_PER_SOL);
 
@@ -304,7 +310,7 @@ export default function AdminPage() {
           Adresse connectée: {publicKey?.toString() || "Non connecté"}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Adresse admin requise: {DEV_ADDRESS}
+          Adresses admin requises: {ADMIN_ADDRESSES.join(', ')}
         </Typography>
         <Button 
           variant="contained" 
@@ -431,7 +437,7 @@ export default function AdminPage() {
               Wallet Administrateur
             </Typography>
             <Box sx={{ mt: 2 }}>
-              <Typography><strong>Adresse:</strong> {DEV_ADDRESS}</Typography>
+              <Typography><strong>Adresses:</strong> {ADMIN_ADDRESSES.join(', ')}</Typography>
               <Typography><strong>Balance:</strong> {adminBalance.toFixed(4)} SOL</Typography>
               <Typography><strong>Initialisé:</strong> {programInfo?.exists ? 'Oui' : 'Non'}</Typography>
             </Box>

@@ -10,6 +10,15 @@ AlyraSign est un projet d'étude réalisé dans le cadre d'une formation dispens
 
 * Gabriel Forestier
 
+## Responsive App
+
+### Version Desktop
+![AlyraSign Desktop Version](public/alyrasign-prototype.fullscreen.png)
+
+### Version Mobile
+![AlyraSign Mobile Version](public/alyrasign-prototype.mobile.png)
+
+
 ## Description
 
 AlyraSign a pour objectif d'enregistrer la présence de participants à des évènements, en utilisant la blockchain Solana.

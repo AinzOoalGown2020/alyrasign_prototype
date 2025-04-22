@@ -264,23 +264,23 @@ validerPresence(sessionId: string, studentAddress: string)
 
 ### Alternatives Possibles
 
-#### 1. Utilisation de SPL (Solana Program Library)
+**1. Utilisation de SPL (Solana Program Library)**
 - Implémentation de tokens SPL pour la gestion des présences
 - Avantages : Standardisation, meilleure interopérabilité
 - Inconvénients : Complexité accrue pour un cas d'usage simple
 
-#### 2. Programme Unique avec CPI (Cross-Program Invocation)
+**2. Programme Unique avec CPI (Cross-Program Invocation)**
 - Fusion des trois programmes en un seul
 - Utilisation de CPI pour les interactions
 - Avantages : Simplification de l'architecture, réduction des coûts
 - Inconvénients : Moins de modularité
 
-#### 3. Utilisation de Metaplex
+**3. Utilisation de Metaplex**
 - Intégration des standards Metaplex pour les métadonnées
 - Avantages : Meilleure gestion des métadonnées, standards établis
 - Inconvénients : Surcharge potentielle pour des besoins simples
 
-#### 4. Programme avec Comptes Optimisés
+**4. Programme avec Comptes Optimisés**
 - Optimisation de la taille des comptes
 - Structures de données plus efficaces
 - Avantages : Réduction des coûts de stockage
@@ -288,17 +288,17 @@ validerPresence(sessionId: string, studentAddress: string)
 
 ### Recommandations
 
-#### Court Terme
+**Court Terme**
 - Maintenir l'architecture actuelle
 - Optimiser les tailles de comptes existants
 - Ajouter des tests plus complets
 
-#### Moyen Terme
+**Moyen Terme**
 - Fusion de `alyra_sign` et `alyra_sign_presence`
 - Conservation de `alyra_sign_registry` séparé
 - Implémentation de mécanismes de mise à jour
 
-#### Long Terme
+**Long Terme**
 - Évaluation de SPL pour les tokens de présence
 - Intégration des standards Metaplex
 - Système de mise à jour automatique

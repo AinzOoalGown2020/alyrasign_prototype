@@ -170,6 +170,19 @@ alyrasign_prototype/
   ```
 - Cette variable est utilisée dans tout le code pour vérifier les permissions d'administration
 
+- Dupliquez le fichier `.env.example` en `.env` et remplacez les valeurs demandées :
+  ```
+  # Wallet admin prédéfini
+  NEXT_PUBLIC_ADMIN_WALLET="votre_adresse_wallet_admin"
+  NEXT_PUBLIC_ADMIN_WALLET_1="votre_adresse_wallet_admin_1"
+  NEXT_PUBLIC_ADMIN_WALLET_2="votre_adresse_wallet_admin_2"
+
+  # Program IDs pour le développement devnet
+  NEXT_PUBLIC_ALYRA_SIGN_PROGRAM_ID="votre_program_id"
+  NEXT_PUBLIC_ALYRA_SIGN_REGISTRY_PROGRAM_ID="votre_registry_program_id"
+  NEXT_PUBLIC_ALYRA_SIGN_PRESENCE_PROGRAM_ID="votre_presence_program_id"
+  ```
+
 ### 2. Procédure de Changement d'Admin
 Pour changer l'adresse du wallet admin :
 1. Ouvrir le fichier `.env` à la racine du projet
@@ -231,6 +244,64 @@ validerPresence(sessionId: string, studentAddress: string)
 - Gestion des compteurs (formation_count, student_count, etc.)
 - Vérification des autorités pour les opérations sensibles
 
+
+## Architecture des Smart Contracts
+
+### Méthode Actuelle de Déploiement
+- Utilisation du framework Anchor pour Solana
+- Smart contracts écrits en Rust
+- Déploiement via la commande `anchor deploy`
+- Programmes déployés sur le réseau devnet
+- Trois programmes principaux :
+  - `alyra_sign` (ID: v69C2KjiWjhUcRTKuotEY1E1PykP4oUtFaBE8ZCg5yJ)
+  - `alyra_sign_registry` (ID: 3vbwWQNTZszFpr4AGcPqJ7ATuJem2MBjZWsDTTYKjKbG)
+  - `alyra_sign_presence` (ID: 4kYH3a5GM9Y7oLJjEhdYSFc6hmvgihfvXaCQij3AZ1J8)
+
+### Structure des Programmes
+- Chaque programme possède ses propres instructions et comptes
+- Utilisation de PDAs (Program Derived Addresses) pour la gestion des comptes
+- Instructions sécurisées avec vérifications de signataires et d'autorité
+
+### Alternatives Possibles
+
+#### 1. Utilisation de SPL (Solana Program Library)
+- Implémentation de tokens SPL pour la gestion des présences
+- Avantages : Standardisation, meilleure interopérabilité
+- Inconvénients : Complexité accrue pour un cas d'usage simple
+
+#### 2. Programme Unique avec CPI (Cross-Program Invocation)
+- Fusion des trois programmes en un seul
+- Utilisation de CPI pour les interactions
+- Avantages : Simplification de l'architecture, réduction des coûts
+- Inconvénients : Moins de modularité
+
+#### 3. Utilisation de Metaplex
+- Intégration des standards Metaplex pour les métadonnées
+- Avantages : Meilleure gestion des métadonnées, standards établis
+- Inconvénients : Surcharge potentielle pour des besoins simples
+
+#### 4. Programme avec Comptes Optimisés
+- Optimisation de la taille des comptes
+- Structures de données plus efficaces
+- Avantages : Réduction des coûts de stockage
+- Inconvénients : Complexité accrue du code
+
+### Recommandations
+
+#### Court Terme
+- Maintenir l'architecture actuelle
+- Optimiser les tailles de comptes existants
+- Ajouter des tests plus complets
+
+#### Moyen Terme
+- Fusion de `alyra_sign` et `alyra_sign_presence`
+- Conservation de `alyra_sign_registry` séparé
+- Implémentation de mécanismes de mise à jour
+
+#### Long Terme
+- Évaluation de SPL pour les tokens de présence
+- Intégration des standards Metaplex
+- Système de mise à jour automatique
 
 ## Dépendances
 

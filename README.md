@@ -1,4 +1,8 @@
-<p style="color: red;">ATTENTION : Ce projet est actuellement en cours de développement. Certaines fonctionnalités peuvent ne pas être entièrement implémentées ou fonctionnelles.</p>
+```
+ATTENTION : 
+Ce projet est actuellement en cours de développement. 
+Certaines fonctionnalités peuvent ne pas être entièrement implémentées ou fonctionnelles.
+```
 
 # AlyraSign
 

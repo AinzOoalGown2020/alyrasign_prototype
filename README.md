@@ -1,5 +1,5 @@
+⚠️ 🚨 ATTENTION 🚨 ⚠️ 
 ```
-ATTENTION : 
 Ce projet est actuellement en cours de développement. 
 Certaines fonctionnalités peuvent ne pas être entièrement implémentées ou fonctionnelles.
 ```

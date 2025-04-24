@@ -1,9 +1,8 @@
 ⚠️ 🚨 ATTENTION 🚨 ⚠️ 
-```
 Ce projet est actuellement en cours de développement.
 Il s'agit d'un prototype réalisé dans le cadre d'une présentation de fin de formation.
 Certaines fonctionnalités peuvent ne pas être entièrement implémentées ou fonctionnelles.
-```
+
 
 # AlyraSign
 

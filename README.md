@@ -11,11 +11,11 @@ AlyraSign est un projet d'étude réalisé dans le cadre d'une formation dispens
 
 ## Authors
 
-* Yannick Jesson
+* Yannick J.
 
-* Mickaël Girondeau
+* Mickaël G.
 
-* Gabriel Forestier
+* Gabriel F.
 
 ## Responsive App
 
